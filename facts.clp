@@ -42,7 +42,7 @@
 
 ;Faire la relation entre la regitditer du corps et le temps depuis la mort
 (deffacts lien-rigiditer-temps
-	(Rigiditer mole la personnne est mort depuis 1 heure)
+	(Rigiditer mole la personne est mort depuis 1 heure)
 	(Rigiditer moyenne la personne est mort depuis 2 heure)
 	(Rigiditer maximale la personne est mort depuis 3 heure)
 )
@@ -169,45 +169,63 @@
 
 ;Faire la relation entre les armes et les lieux
 (deffacts lien-arme-lieu
-	(hotel contient arme-lieu Poison) 
-	(hotel contient arme-lieu Gaz) 
-	(hotel contient arme-lieu Voiture) 
-	(hotel contient arme-lieu Moto) 
-	(hotel contient arme-lieu Lance-flamme) 
-	(hotel contient arme-lieu Hydrogene-Liquide) 
-	(hotel contient arme-lieu Corde) 
-	(hotel contient arme-lieu Couteau)
-	(bar contient arme-lieu Couteau) 
-	(bar contient arme-lieu Scie) 
-	(bar contient arme-lieu Lance-flamme) 
-	(bar contient arme-lieu Poison)
-	(aeroport contient arme-lieu Pistolet) 
-	(aeroport contient arme-lieu Voiture) 
-	(aeroport contient arme-lieu Moto) 
-	(aeroport contient arme-lieu Marteau) 
-	(aeroport contient arme-lieu Scie)
-	(bibliotheque contient arme-lieu Corde) 
-	(bibliotheque contient arme-lieu C4) 
-	(bibliotheque contient arme-lieu Arsenic) 
-	(bibliotheque contient arme-lieu Scie)
-	(stripclub contient arme-lieu Corde) 
-	(stripclub contient arme-lieu Baton-de-baseball) 
-	(stripclub contient arme-lieu Marteau) 
-	(stripclub contient arme-lieu Voiture) 
-	(stripclub contient arme-lieu Moto) 
-	(stripclub contient arme-lieu Pistolet)
-	(parc contient arme-lieu Baton-de-baseball) 
-	(parc contient arme-lieu Voiture) 
-	(parc contient arme-lieu Moto) 
-	(parc contient arme-lieu Corde)
-	(courthouse contient arme-lieu Marteau) 
-	(courthouse contient arme-lieu Corde) 
-	(courthouse contient arme-lieu Voiture) 
-	(courthouse contient arme-lieu Pistolet)
+	(lieu hotel contient arme-lieu Poison) 
+	(lieu hotel contient arme-lieu Gaz) 
+	(lieu hotel contient arme-lieu Voiture) 
+	(lieu hotel contient arme-lieu Moto) 
+	(lieu hotel contient arme-lieu Lance-flamme) 
+	(lieu hotel contient arme-lieu Hydrogene-Liquide) 
+	(lieu hotel contient arme-lieu Corde) 
+	(lieu hotel contient arme-lieu Couteau)
+	(lieu bar contient arme-lieu Couteau) 
+	(lieu bar contient arme-lieu Scie) 
+	(lieu bar contient arme-lieu Lance-flamme) 
+	(lieu bar contient arme-lieu Poison)
+	(lieu aeroport contient arme-lieu Pistolet) 
+	(lieu aeroport contient arme-lieu Voiture) 
+	(lieu aeroport contient arme-lieu Moto) 
+	(lieu aeroport contient arme-lieu Marteau) 
+	(lieu aeroport contient arme-lieu Scie)
+	(lieu bibliotheque contient arme-lieu Corde) 
+	(lieu bibliotheque contient arme-lieu C4) 
+	(lieu bibliotheque contient arme-lieu Arsenic) 
+	(lieu bibliotheque contient arme-lieu Scie)
+	(lieu stripclub contient arme-lieu Corde) 
+	(lieu stripclub contient arme-lieu Baton-de-baseball) 
+	(lieu stripclub contient arme-lieu Marteau) 
+	(lieu stripclub contient arme-lieu Voiture) 
+	(lieu stripclub contient arme-lieu Moto) 
+	(lieu stripclub contient arme-lieu Pistolet)
+	(lieu parc contient arme-lieu Baton-de-baseball) 
+	(lieu parc contient arme-lieu Voiture) 
+	(lieu parc contient arme-lieu Moto) 
+	(lieu parc contient arme-lieu Corde)
+	(lieu courthouse contient arme-lieu Marteau) 
+	(lieu courthouse contient arme-lieu Corde) 
+	(lieu courthouse contient arme-lieu Voiture) 
+	(lieu courthouse contient arme-lieu Pistolet)
 )
+
+(deffacts risque-suspect 
+	(Risque neutre est 50)
+	(Risque faible est 10)
+	(Risque eleve est 100)
+)
+
+(deffacts relation-suspect 
+	(relation amicale a un risque faible)
+	(relation neutre a un risque neutre)
+	(relation hostile a un risque eleve)
+)
+
 
 (deffacts test
 	(lelelel est mort)
+	(le cadavre a des fractures)
+	(le cadavre a une couleur pale)
+	(le cadavre a une rigidite mole)
+	(le cadavre a une temperature 18)
+	(le cadavre a une relation amicale avec lulu)
 )
 
 (reset)
@@ -247,9 +265,11 @@
 ;le temps que le cadavre a ete trouver 
 ;et le deces en fonction de la couleur du cadavre
 (defrule time-of-death-couleur
-  (declare (salience 2))
+  (declare (salience 5))
   (le cadavre a une couleur ?color)
-  (Couleur ?color la personne est mort depuis ?time heure)  =>  (printout t "Selon la couleur du cadavre, la personne est morte " ?time " avant la decouverte du cadavre" crlf)
+  (Couleur ?color la personne est mort depuis ?time heure)
+  =>
+  (printout t "Selon la couleur du cadavre, la personne est morte " ?time " heure avant la decouverte du cadavre" crlf)
   (assert (delta-time-color-death ?time))
 )
 
@@ -257,9 +277,11 @@
 ;le temps que le cadavre a ete trouver 
 ;et le deces en fonction de la rigidite du cadavre
 (defrule time-of-death-rigidite
-  (declare (salience 2))
+  (declare (salience 5))
   (le cadavre a une rigidite ?rigidite)
-  (Rigiditer ?rigidite la personne est mort depuis ?time heure)  =>  (printout t "Selon la rigidite du cadavre, la personne est morte " ?time " avant la decouverte du cadavre" crlf)
+  (Rigiditer ?rigidite la personne est mort depuis ?time heure) 
+  =>
+  (printout t "Selon la rigidite du cadavre, la personne est morte " ?time " heure avant la decouverte du cadavre" crlf)
   (assert (delta-time-rigidite-death ?time))
 )
 
@@ -267,10 +289,10 @@
 ;le temps que le cadavre a ete trouver 
 ;et le deces en fonction de la temperature du cadavre
 (defrule time-of-death-temperature
-  (declare (salience 2))
+  (declare (salience 5))
   (le cadavre a une temperature ?temperature) 
   =>
-  (bind ?time (* (- 36.9 ?temperature) 1.2)) 
+  (bind ?time (round (* (- 36.9 ?temperature) 1.2))) 
   (printout t "Selon la temperature du cadavre, la personne est morte " ?time " avant la decouverte du cadavre" crlf)
   (assert (delta-time-temperature-death ?time))
 )
@@ -279,8 +301,50 @@
 ;Determiner le VRAI temps de deces
 (defrule time-of-death
   (declare (salience 3))
+  (delta-time-color-death ?time-color)
+  (delta-time-rigidite-death ?time-rigidite)
+  (delta-time-temperature-death ?time-temperature)
   =>
-  (bind ?min-time(min delta-time-color-death delta-time-rigidite-death delta-time-temperature-death))
+  (bind ?min-time(max ?time-color ?time-rigidite ?time-temperature))
   (printout t "Apres investigation, la personne est morte il y a " ?min-time " heures" crlf)
   (assert (delta-timedeath ?min-time))
 )
+
+;Relations entre personnages
+
+;Arme du crime
+(defrule arme-du-crime
+	(declare (salience 10))
+	(le cadavre a des ?blessures)
+	(blessure ?blessures est fait par type-armes ?armes)
+	=>
+	(printout t "arme du crime possible est " ?armes crlf)
+	(assert (armes-possible ?armes))
+)
+
+;Lieux possible pour armes du crime
+(defrule location-arme
+	(declare (salience 9))
+	(armes-possible ?armes)
+	(lieu ?lieux contient arme-lieu ?armes)
+	=>
+	(printout t "Lieux ou le suspect a pu prendre l'arme " ?lieux crlf)
+	(assert (lieu-arme-suspect ?lieux))
+)
+
+;Niveau de suspects (low, med, high)
+(defrule niveau-suspect
+	(declare (salience 3))
+	(le cadavre a une relation ?relation avec ?suspect)
+	(relation ?relation a un risque ?niveau)
+	=>
+	(printout t "Le suspect " ?suspect " a une probabilite " ?niveau " d'etre le meurtrie" crlf)
+)
+
+;Eliminer les lieux qui ne peuvent etre visiter
+
+;Eliminer les chemins qui sont en construction (mettre le temps de travel a l'infini)
+
+;Determiner la vitesse des vehicules qui ne sont pas disabled
+
+;Lieux possible  ou le suspect aurait pu s'enfuir dans un delai de temps <= temps de decouverte du cadavre - temps de deces
