@@ -112,30 +112,11 @@
 
 ;faire le lien entre le climat et les vehicules
 (deffacts lien-climat-vehicule
-	(Le climat rainy desactive-vehicule marche)
-	(Le climat rainy desactive-vehicule hoverboard)
-	(Le climat snowy desactive-vehicule velo)
-	(Le climat snowy desactive-vehicule moto)
-	(Le climat snowy desactive-vehicule hoverboard)
-	(Le climat blizzard desactive-vehicule avion)
-	(Le climat blizzard desactive-vehicule bus)
-	(Le climat blizzard desactive-vehicule voiture)
-	(Le climat blizzard desactive-vehicule moto)
-	(Le climat blizzard desactive-vehicule helico)
-	(Le climat blizzard desactive-vehicule velo)
-	(Le climat blizzard desactive-vehicule marche)
-	(Le climat blizzard desactive-vehicule hoverboard)
-	(Le climat thunderstorm desactive-vehicule avion)
-	(Le climat thunderstorm desactive-vehicule helico)
-	(Le climat tsuname desactive-vehicule avion) 
-	(Le climat tsuname desactive-vehicule bus) 
-	(Le climat tsuname desactive-vehicule voiture) 
-	(Le climat tsuname desactive-vehicule moto) 
-	(Le climat tsuname desactive-vehicule helico) 
-	(Le climat tsuname desactive-vehicule velo) 
-	(Le climat tsuname desactive-vehicule marche) 
-	(Le climat tsuname desactive-vehicule hoverboard) 
-	(Le climat tsuname desactive-vehicule train)
+	(Le climat rainy desactive-vehicule(list marche hoverboard))
+	(Le climat snowy desactive-vehicule (list velo moto hoverboard)) 
+	(Le climat blizzard desactive-vehicule (list avion bus voiture moto helico velo marche hoverboard))
+	(Le climat thunderstorm desactive-vehicule (list avion helico))
+	(Le climat tsuname desactive-vehicule (list avion bus voiture moto helico velo marche hoverboard train))
 )
 
 ;;;;;;;;;
@@ -226,6 +207,22 @@
 	(le cadavre a une rigidite mole)
 	(le cadavre a une temperature 18)
 	(le cadavre a une relation amicale avec lulu)
+	(le climat de la scene est snowy)
+)
+
+;;;;;;;;;;;;;
+; Transport ;
+;;;;;;;;;;;;;
+(deffacts velocite-vehicule
+	(le vehicule avion a une velocite maximale de 16)
+	(le vehicule helicoptere a une velocite maximale de 16)
+	(le vehicule bus a une velocite maximale de 12)
+	(le vehicule voiture a une velocite maximale de 12)
+	(le vehicule moto a une velocite maximale de 12)
+	(le vehicule train a une velocite maximale de 12)
+	(le vehicule velo a une velocite maximale de 8)
+	(le vehicule marche a une velocite maximale de 4)
+	(le vehicule hoverboard a une velocite maximale de 4)
 )
 
 (reset)
@@ -255,8 +252,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;; Regles simples	   ;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Calculer temps de mort  ;
@@ -310,8 +305,6 @@
   (assert (delta-timedeath ?min-time))
 )
 
-;Relations entre personnages
-
 ;Arme du crime
 (defrule arme-du-crime
 	(declare (salience 10))
@@ -328,7 +321,7 @@
 	(armes-possible ?armes)
 	(lieu ?lieux contient arme-lieu ?armes)
 	=>
-	(printout t "Lieux ou le suspect a pu prendre l'arme " ?lieux crlf)
+	(printout t "Lieux ou le suspect a pu prendre l'arme " ?armes " " ?lieux crlf)
 	(assert (lieu-arme-suspect ?lieux))
 )
 
@@ -338,13 +331,40 @@
 	(le cadavre a une relation ?relation avec ?suspect)
 	(relation ?relation a un risque ?niveau)
 	=>
-	(printout t "Le suspect " ?suspect " a une probabilite " ?niveau " d'etre le meurtrie" crlf)
+	(printout t "Le suspect " ?suspect " a une probabilite " ?niveau " d'etre le meurtrier" crlf)
+)
+
+;Determiner la vitesse des vehicules qui ne sont pas disabled
+(defrule vitesse-vehicule
+	(declare (salience 50))
+	(le climat de la scene est ?climat)
+	(le vehicule ?vehicule a une velocite maximale de ?vitesse)
+	(Le climat ?climat reduit la vitesse de ?facteur)
+	(Le climat ?climat desactive-vehicule $?list-desactive-vehicule)
+	(test (not (member$ ?vehicule $?list-desactive-vehicule)))
+	=>
+	(bind ?velocite (* ?facteur ?vitesse))
+	(assert (velocite-vehicule ?vehicule ?velocite))
+	(printout t "La vitesse du moyen de transport " ?vehicule " dans le climat " ?climat " est " ?velocite crlf)
+)
+
+;Determiner le temps qu'un vehicule prend parcourir un chemin au complet
+(defrule temps-parcourir-chemin
+	(declare (salience 25))
+	(velocite-vehicule ?vehicule ?velocite)
+	(access-route (vehicule ?vehicule) (chemin $?chemins))
+	=>
+	(foreach ?chemin ?chemins
+		(La route ?chemin possede une distance de ?distance km)
+		(bind ?temps-deplacement (/ ?distance ?velocite))
+		(printout t "YOLO " ?chemin " " ?vehicule crlf)
+	)
 )
 
 ;Eliminer les lieux qui ne peuvent etre visiter
 
 ;Eliminer les chemins qui sont en construction (mettre le temps de travel a l'infini)
 
-;Determiner la vitesse des vehicules qui ne sont pas disabled
-
 ;Lieux possible  ou le suspect aurait pu s'enfuir dans un delai de temps <= temps de decouverte du cadavre - temps de deces
+
+;Relations entre personnages
