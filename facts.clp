@@ -5,6 +5,9 @@
 (deftemplate access-route (slot vehicule) (multislot chemin))
 (deftemplate victime  (slot nom))
 (deftemplate lieu-cadavre (slot lieu-cadavre))
+(deftemplate route (slot name) (slot km))
+(deftemplate vehicule-route-temps (slot vehicule) (slot route) (slot temps))
+(deftemplate profession-suspect-vehicule-climat (slot vehicule) (slot profession))
 
 ;;;;;;;;;;;;;;
 ; Profession ;
@@ -12,21 +15,21 @@
 
 ;Faire les relations entre les professions et leur revenu
 (deffacts lien-revenu-profession
-	(Stripper est dans la classe moyenne)
-	(Flight attendant est dans la classe moyenne)
-	(Bartender est dans la classe pauvre)
-	(Pilot est dans la classe riche)
-	(Librarian est dans la classe pauvre)
-	(Homeless est dans la classe pauvre)
-	(Clerk est dans la classe moyenne)
-	(Businessman est dans la classe riche)
-	(Chef est dans la classe riche)
-	(Policier est dans la classe moyenne)
-	(Lawyer est dans la classe riche)
-	(Judge est dans la classe riche)
-	(Jury est dans la classe moyenne)
-	(Scientist est dans la classe riche)
-	(Chemist est dans la classe riche)
+	(profession Stripper est dans la classe moyenne)
+	(profession Flight attendant est dans la classe moyenne)
+	(profession Bartender est dans la classe pauvre)
+	(profession Pilot est dans la classe riche)
+	(profession Librarian est dans la classe pauvre)
+	(profession Homeless est dans la classe pauvre)
+	(profession Clerk est dans la classe moyenne)
+	(profession Businessman est dans la classe riche)
+	(profession Chef est dans la classe riche)
+	(profession Policier est dans la classe moyenne)
+	(profession Lawyer est dans la classe riche)
+	(profession Judge est dans la classe riche)
+	(profession Jury est dans la classe moyenne)
+	(profession Scientist est dans la classe riche)
+	(profession Chemist est dans la classe riche)
 )
 
 ;;;;;;;;;;;;;;;;;
@@ -64,7 +67,7 @@
 	(Les chemin unidirectionnel sont direction-route 90)
 	(Les chemin unidirectionnel sont direction-route 95)
 	(Les chemin unidirectionnel sont direction-route 110)
-	(Les chemin bidirectionnel sont direction-route 13)
+	(Les chemin unidirectionnel sont direction-route 13)
 )
 
 ;Faire la relation entre les route et les lieux
@@ -85,18 +88,18 @@
 
 ;Faire la relation entre les route et leur distance
 (deffacts lien-route-distance
-	(La route 24 possede une distance de 16 km)
-	(La route 13 possede une distance de 32 km)
-	(La route 720 possede une distance de 16 km)
-	(La route 69 possede une distance 8 km)
-	(La route 66 possede une distance de 48 km)
-	(La route 40 possede une distance de 24 km)
-	(La route 440 possede une distance de 20 km)
-	(La route 15 possede une distance de 16 km)
-	(La route 20 possede une distance de 8 km)
-	(La route 90 possede une distance de 4 km)
-	(La route 95 possede une distance de 48 km)
-	(La route 110 possede une distance de 16 km)
+	(route (name 24) (km 16))
+	(route (name 13) (km 32))
+	(route (name 720) (km 16))
+	(route (name 69) (km 8))
+	(route (name 66) (km 48))
+	(route (name 40) (km 24))
+	(route (name 440) (km 20))
+	(route (name 15) (km 16))
+	(route (name 20) (km 8))
+	(route (name 90) (km 4))
+	(route (name 95) (km 48))
+	(route (name 110) (km 16))
 )
 
 ;faire le lien entre le climat et la vitesse
@@ -114,9 +117,9 @@
 (deffacts lien-climat-vehicule
 	(Le climat rainy desactive-vehicule(list marche hoverboard))
 	(Le climat snowy desactive-vehicule (list velo moto hoverboard)) 
-	(Le climat blizzard desactive-vehicule (list avion bus voiture moto helico velo marche hoverboard))
-	(Le climat thunderstorm desactive-vehicule (list avion helico))
-	(Le climat tsuname desactive-vehicule (list avion bus voiture moto helico velo marche hoverboard train))
+	(Le climat blizzard desactive-vehicule (list avion bus voiture moto helicoptere velo marche hoverboard))
+	(Le climat thunderstorm desactive-vehicule (list avion helicoptere))
+	(Le climat tsuname desactive-vehicule (list avion bus voiture moto helicoptere velo marche hoverboard train))
 )
 
 ;;;;;;;;;
@@ -232,9 +235,9 @@
 ;;;;;;;;;;;;;
 
 ;Faire les relations entre les transport et revenu
-(assert(moyen-transport (Classe riche) (vehicule avion bus voiture moto helicoptere velo marcher hoverboard train)))
-(assert(moyen-transport (Classe moyennes) (vehicule bus voiture moto velo marcher hoverboard train)))
-(assert(moyen-transport (Classe pauvre) (vehicule velo marcher)))
+(assert(moyen-transport (Classe riche) (vehicule avion bus voiture moto helicoptere velo marche hoverboard train)))
+(assert(moyen-transport (Classe moyennes) (vehicule bus voiture moto velo marche hoverboard train)))
+(assert(moyen-transport (Classe pauvre) (vehicule velo marche)))
 
 ;Faire le lien entre les vehicule et les routes
 
@@ -248,6 +251,18 @@
 (assert   (access-route (vehicule marche) (chemin 24 13 720 69 66 40 440 15 20 90 95 110)))
 (assert   (access-route (vehicule hoverboard) (chemin 24 13 720 69 66 40 440 15 20 90 95 110)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;; Query ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defquery search-by-route-name
+	(declare (variables ?chemin))
+	(route (name ?chemin) (km ?km))
+)
+
+(defquery search-by-vehicule-route-temps
+	(declare (variables ?route))
+	(vehicule-route-temps (vehicule ?vehicule) (route ?route) (temps ?temps))
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;; Regles simples	   ;;;;;;;;;;;;;;;;;
@@ -331,9 +346,10 @@
 	(le cadavre a une relation ?relation avec ?suspect)
 	(relation ?relation a un risque ?niveau)
 	=>
-	(printout t "Le suspect " ?suspect " a une probabilite " ?niveau " d'etre le meurtrier" crlf)
+	(printout t "Les suspect " ?suspect " a une probabilite " ?niveau " d'etre le meurtrier" crlf)
 )
 
+; ------- Complex or not?
 ;Determiner la vitesse des vehicules qui ne sont pas disabled
 (defrule vitesse-vehicule
 	(declare (salience 50))
@@ -344,22 +360,39 @@
 	(test (not (member$ ?vehicule $?list-desactive-vehicule)))
 	=>
 	(bind ?velocite (* ?facteur ?vitesse))
-	(assert (velocite-vehicule ?vehicule ?velocite))
-	(printout t "La vitesse du moyen de transport " ?vehicule " dans le climat " ?climat " est " ?velocite crlf)
+	(assert (velocite-vehicule-climat ?vehicule ?velocite))
+	;(printout t "La vitesse du moyen de transport " ?vehicule " dans le climat " ?climat " est " ?velocite crlf)
 )
 
+; ------- Complex or not?
 ;Determiner le temps qu'un vehicule prend parcourir un chemin au complet
 (defrule temps-parcourir-chemin
 	(declare (salience 25))
-	(velocite-vehicule ?vehicule ?velocite)
+	(velocite-vehicule-climat ?vehicule ?velocite)
 	(access-route (vehicule ?vehicule) (chemin $?chemins))
 	=>
 	(foreach ?chemin ?chemins
-		(La route ?chemin possede une distance de ?distance km)
-		(bind ?temps-deplacement (/ ?distance ?velocite))
-		(printout t "YOLO " ?chemin " " ?vehicule crlf)
+		(bind ?query-chemin (run-query* search-by-route-name ?chemin))
+		(?query-chemin next)
+		(bind ?distance (?query-chemin getInt km))
+		(bind ?temps-deplacement (round (/ ?distance ?velocite)))
+		(assert (vehicule-route-temps (vehicule ?vehicule) (route $?chemin) (temps $?temps-deplacement)))
 	)
 )
+
+; ------- Complex or not?
+;Deteminer les professions qui ont access au vehicule (a partir de la liste filtrer dans velocite-vehicule)
+(defrule profession-vehicule 
+	(declare (salience 24))
+	(profession ?profession est dans la classe ?classe)
+	(moyen-transport (Classe ?classe) (vehicule $?vehicules))
+	(velocite-vehicule-climat ?vehicule ?velocite)
+	(test (member$ ?vehicule $?vehicules)) 
+	=>
+	(assert(profession-suspect-vehicule-climat (vehicule ?vehicule) (profession ?profession)))
+)
+
+
 
 ;Eliminer les lieux qui ne peuvent etre visiter
 
