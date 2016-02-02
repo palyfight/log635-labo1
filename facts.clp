@@ -8,6 +8,7 @@
 (deftemplate route (slot name) (slot km))
 (deftemplate vehicule-route-temps (slot vehicule) (slot route) (slot temps))
 (deftemplate profession-suspect-vehicule-climat (slot vehicule) (slot profession))
+(deftemplate route (slot name) (slot starts) (slot destination))
 
 ;;;;;;;;;;;;;;
 ; Profession ;
@@ -54,49 +55,29 @@
 ; Faits pour les routes ;
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
-;faire le lien entre la direction et les route
-(deffacts lien-direction-route
-	(Les chemin unidirectionnel sont direction-route 24)
-	(Les chemin unidirectionnel sont direction-route 720)
-	(Les chemin unidirectionnel sont direction-route 69)
-	(Les chemin unidirectionnel sont direction-route 66)
-	(Les chemin unidirectionnel sont direction-route 40)
-	(Les chemin unidirectionnel sont direction-route 440)
-	(Les chemin unidirectionnel sont direction-route 15)
-	(Les chemin unidirectionnel sont direction-route 20)
-	(Les chemin unidirectionnel sont direction-route 90)
-	(Les chemin unidirectionnel sont direction-route 95)
-	(Les chemin unidirectionnel sont direction-route 110)
-	(Les chemin unidirectionnel sont direction-route 13)
-)
 
 ;Faire la relation entre les route et les lieux
 (deffacts lien-route-lieux
-	(La route 24 fait lien entre courthouse et stripclub)
-	(La route 13 fait lien entre aeroport et stripclub)
-	(La route 720 fait lien entre parc et stripclub)
-	(La route 69 fait lien entre stripclub et bibliotheque)
-	(La route 66 fait lien entre courthouse et parc)
-	(La route 40 fait lien entre parc et hotel)
-	(La route 440 fait lien entre bar et parc)
-	(La route 15 fait lien entre aeroport et bar)
-	(La route 20 fait lien entre hotel et aeroport)
-	(La route 90 fait lien entre bar et hotel)
-	(La route 95 fait lien entre hotel et bibliotheque)
-	(La route 110 fait lien entre bibliotheque et courthouse)
+	(route (name 13) (starts stripclub) (destination aeroport))
+	(route (name 720) (starts parc) (destination stripclub))
+	(route (name 66) (starts courthouse) (destination parc))
+	(route (name 15) (starts aeroport) (destination bar))
+	(route (name 90) (starts bar) (destination hotel))
+	(route (name 95) (starts hotel) (destination bibliotheque))
+	(route (name 110) (starts bibliotheque) (destination courthouse))
 )
 
 ;Faire la relation entre les route et leur distance
 (deffacts lien-route-distance
-	(route (name 24) (km 16))
+	;(route (name 24) (km 16))
 	(route (name 13) (km 32))
 	(route (name 720) (km 16))
-	(route (name 69) (km 8))
+	;(route (name 69) (km 8))
 	(route (name 66) (km 48))
-	(route (name 40) (km 24))
-	(route (name 440) (km 20))
+	;(route (name 40) (km 24))
+	;(route (name 440) (km 20))
 	(route (name 15) (km 16))
-	(route (name 20) (km 8))
+	;(route (name 20) (km 8))
 	(route (name 90) (km 4))
 	(route (name 95) (km 48))
 	(route (name 110) (km 16))
@@ -206,6 +187,7 @@
 (deffacts test
 	(lelelel est mort)
 	(le cadavre a des fractures)
+	(le cadavre se trouve au lieu parc)
 	(le cadavre a une couleur pale)
 	(le cadavre a une rigidite mole)
 	(le cadavre a une temperature 18)
@@ -243,13 +225,13 @@
 
 (assert   (access-route (vehicule avion) (chemin 13 66 95)))
 (assert   (access-route (vehicule helicoptere) (chemin 13 66 95)))
-(assert   (access-route (vehicule bus) (chemin 24 720 66 440 20 95)))
-(assert   (access-route (vehicule voiture) (chemin 24 13 720 69 66 40 440 15 20 90 95 110)))
-(assert   (access-route (vehicule moto) (chemin 24 13 69 40 440 15 90 110)))
-(assert   (access-route (vehicule train) (chemin 24 13 15 110 69 66 20 720 40)))
-(assert   (access-route (vehicule velo) (chemin 24 13 720 69 66 40 440 15 20 90 95 110)))
-(assert   (access-route (vehicule marche) (chemin 24 13 720 69 66 40 440 15 20 90 95 110)))
-(assert   (access-route (vehicule hoverboard) (chemin 24 13 720 69 66 40 440 15 20 90 95 110)))
+(assert   (access-route (vehicule bus) (chemin 720 66 95)))
+(assert   (access-route (vehicule voiture) (chemin 13 720 66 15 90 95 110)))
+(assert   (access-route (vehicule moto) (chemin 13 15 90 110)))
+(assert   (access-route (vehicule train) (chemin 13 15 110 66 720 40)))
+(assert   (access-route (vehicule velo) (chemin 13 720 66 15 90 95 110)))
+(assert   (access-route (vehicule marche) (chemin 13 720 66 15 90 95 110)))
+(assert   (access-route (vehicule hoverboard) (chemin 13 720 66 15 90 95 110)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;; Query ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -262,6 +244,11 @@
 (defquery search-by-vehicule-route-temps
 	(declare (variables ?route))
 	(vehicule-route-temps (vehicule ?vehicule) (route ?route) (temps ?temps))
+)
+
+(defquery search-by-lieu
+	(declare (variables ?starts))
+	(route (name ?chemin) (starts ?starts) (destination ?destination))
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -376,7 +363,7 @@
 		(?query-chemin next)
 		(bind ?distance (?query-chemin getInt km))
 		(bind ?temps-deplacement (round (/ ?distance ?velocite)))
-		(assert (vehicule-route-temps (vehicule ?vehicule) (route $?chemin) (temps $?temps-deplacement)))
+		(assert (vehicule-route-temps (vehicule ?vehicule) (route ?chemin) (temps ?temps-deplacement)))
 	)
 )
 
@@ -392,6 +379,26 @@
 	(assert(profession-suspect-vehicule-climat (vehicule ?vehicule) (profession ?profession)))
 )
 
+;Determiner les lieux possible du suspect avec le temps de deplacement des vehicules
+(defrule lieu-suspect
+	(declare (salience 23))
+	(le cadavre se trouve au lieu ?lieu)
+	(route (name ?chemin) (starts ?lieu) (destination ?destination))
+	(delta-timedeath ?time) =>
+	bind(?time-of-death ?time)
+	;while(?time-of-death > 0
+		;(bind ?query-chemin (run-query* search-by-vehicule-route-temps ?chemin))
+		;(?query-chemin next)
+		;(bind ?temps-deplacement (?query-chemin getInt ?temps))
+		;(bind ?time-of-death (- ?time-of-death ?temps-deplacement))
+		
+		;(bind ?query-destination (run-query* search-by-lieu ?destination))
+		;(bind ?query-destination next)
+		;(bind ?destination (?query-destination getString ?destination))
+		;(bind ?chemin (?query-destination getInt ?chemin))
+	;)
+
+)
 
 
 ;Eliminer les lieux qui ne peuvent etre visiter
