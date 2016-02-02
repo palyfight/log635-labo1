@@ -8,7 +8,7 @@
 (deftemplate route (slot name) (slot km))
 (deftemplate vehicule-route-temps (slot vehicule) (slot route) (slot temps))
 (deftemplate profession-suspect-vehicule-climat (slot vehicule) (slot profession))
-(deftemplate route (slot name) (slot starts) (slot destination))
+(deftemplate travelling-routes (slot name) (slot starts) (slot destination))
 
 ;;;;;;;;;;;;;;
 ; Profession ;
@@ -52,19 +52,19 @@
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
-; Faits pour les routes ;
+; Faits pour les travelling-routes ;
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 ;Faire la relation entre les route et les lieux
 (deffacts lien-route-lieux
-	(route (name 13) (starts stripclub) (destination aeroport))
-	(route (name 720) (starts parc) (destination stripclub))
-	(route (name 66) (starts courthouse) (destination parc))
-	(route (name 15) (starts aeroport) (destination bar))
-	(route (name 90) (starts bar) (destination hotel))
-	(route (name 95) (starts hotel) (destination bibliotheque))
-	(route (name 110) (starts bibliotheque) (destination courthouse))
+	(travelling-routes (name 13) (starts stripclub) (destination aeroport))
+	(travelling-routes (name 720) (starts parc) (destination stripclub))
+	(travelling-routes (name 66) (starts courthouse) (destination parc))
+	(travelling-routes (name 15) (starts aeroport) (destination bar))
+	(travelling-routes (name 90) (starts bar) (destination hotel))
+	(travelling-routes (name 95) (starts hotel) (destination bibliotheque))
+	(travelling-routes (name 110) (starts bibliotheque) (destination courthouse))
 )
 
 ;Faire la relation entre les route et leur distance
@@ -221,14 +221,14 @@
 (assert(moyen-transport (Classe moyennes) (vehicule bus voiture moto velo marche hoverboard train)))
 (assert(moyen-transport (Classe pauvre) (vehicule velo marche)))
 
-;Faire le lien entre les vehicule et les routes
+;Faire le lien entre les vehicule et les travelling-routes
 
 (assert   (access-route (vehicule avion) (chemin 13 66 95)))
 (assert   (access-route (vehicule helicoptere) (chemin 13 66 95)))
 (assert   (access-route (vehicule bus) (chemin 720 66 95)))
 (assert   (access-route (vehicule voiture) (chemin 13 720 66 15 90 95 110)))
 (assert   (access-route (vehicule moto) (chemin 13 15 90 110)))
-(assert   (access-route (vehicule train) (chemin 13 15 110 66 720 40)))
+(assert   (access-route (vehicule train) (chemin 13 15 110 66 720)))
 (assert   (access-route (vehicule velo) (chemin 13 720 66 15 90 95 110)))
 (assert   (access-route (vehicule marche) (chemin 13 720 66 15 90 95 110)))
 (assert   (access-route (vehicule hoverboard) (chemin 13 720 66 15 90 95 110)))
@@ -244,11 +244,6 @@
 (defquery search-by-vehicule-route-temps
 	(declare (variables ?route))
 	(vehicule-route-temps (vehicule ?vehicule) (route ?route) (temps ?temps))
-)
-
-(defquery search-by-lieu
-	(declare (variables ?starts))
-	(route (name ?chemin) (starts ?starts) (destination ?destination))
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -379,27 +374,6 @@
 	(assert(profession-suspect-vehicule-climat (vehicule ?vehicule) (profession ?profession)))
 )
 
-;Determiner les lieux possible du suspect avec le temps de deplacement des vehicules
-(defrule lieu-suspect
-	(declare (salience 23))
-	(le cadavre se trouve au lieu ?lieu)
-	(route (name ?chemin) (starts ?lieu) (destination ?destination))
-	(delta-timedeath ?time) =>
-	bind(?time-of-death ?time)
-	;while(?time-of-death > 0
-		;(bind ?query-chemin (run-query* search-by-vehicule-route-temps ?chemin))
-		;(?query-chemin next)
-		;(bind ?temps-deplacement (?query-chemin getInt ?temps))
-		;(bind ?time-of-death (- ?time-of-death ?temps-deplacement))
-		
-		;(bind ?query-destination (run-query* search-by-lieu ?destination))
-		;(bind ?query-destination next)
-		;(bind ?destination (?query-destination getString ?destination))
-		;(bind ?chemin (?query-destination getInt ?chemin))
-	;)
-
-)
-
 
 ;Eliminer les lieux qui ne peuvent etre visiter
 
@@ -408,3 +382,5 @@
 ;Lieux possible  ou le suspect aurait pu s'enfuir dans un delai de temps <= temps de decouverte du cadavre - temps de deces
 
 ;Relations entre personnages
+
+(run)
