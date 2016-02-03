@@ -9,6 +9,8 @@
 (deftemplate vehicule-route-temps (slot vehicule) (slot route) (slot temps))
 (deftemplate profession-suspect-vehicule-climat (slot vehicule) (slot profession))
 (deftemplate travelling-routes (slot name) (slot starts) (slot destination))
+(deftemplate niveau-habilete (multislot profession) (slot arme) (slot niveau))
+(deftemplate probabilite-meurtrier (slot probabilite) (slot arme) (slot nom))
 
 ;;;;;;;;;;;;;;
 ; Profession ;
@@ -52,7 +54,7 @@
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
-; Faits pour les travelling-routes ;
+; Faits pour les routes ;
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
 
@@ -183,6 +185,11 @@
 	(relation hostile a un risque eleve)
 )
 
+(deffacts relation-habilite-probabilite-de-meurtre
+	(niveau habilite faible a une probabilite 25 detre meurtrier)
+	(niveau habilite moyen a une probabilite 50 detre meurtrier)
+	(niveau habilite expert a une probabilite 75 detre meurtrier)	
+)
 
 (deffacts test
 	(lelelel est mort)
@@ -193,6 +200,7 @@
 	(le cadavre a une temperature 18)
 	(le cadavre a une relation amicale avec lulu)
 	(le climat de la scene est snowy)
+	(la personne lulu est profession Clerk)
 )
 
 ;;;;;;;;;;;;;
@@ -222,7 +230,6 @@
 (assert(moyen-transport (Classe pauvre) (vehicule velo marche)))
 
 ;Faire le lien entre les vehicule et les travelling-routes
-
 (assert   (access-route (vehicule avion) (chemin 13 66 95)))
 (assert   (access-route (vehicule helicoptere) (chemin 13 66 95)))
 (assert   (access-route (vehicule bus) (chemin 720 66 95)))
@@ -232,6 +239,55 @@
 (assert   (access-route (vehicule velo) (chemin 13 720 66 15 90 95 110)))
 (assert   (access-route (vehicule marche) (chemin 13 720 66 15 90 95 110)))
 (assert   (access-route (vehicule hoverboard) (chemin 13 720 66 15 90 95 110)))
+
+;;;;;;;;;;;;;;;;;;;
+; Armes-Profession;
+;;;;;;;;;;;;;;;;;;;
+
+;Faire la relation entre les armes et les professions
+(assert( niveau-habilete (profession Stripper Librarian Businessman Lawyer Scientist) (arme Pistolet) (niveau faible)))
+(assert( niveau-habilete (profession Bartender Homeless Chef Judge Chemist) (arme Pistolet) (niveau moyen)))
+(assert( niveau-habilete (profession Pilot Clerk Policier Jury Flight-attendant) (arme Pistolet) (niveau expert)))
+
+(assert( niveau-habilete (profession Stripper Librarian Businessman Lawyer Scientist) (arme Couteau) (niveau moyen)))
+(assert( niveau-habilete (profession Bartender Homeless Chef Judge Chemist) (arme Couteau) (niveau faible)))
+(assert( niveau-habilete (profession Pilot Clerk Policier Jury Flight-attendant) (arme Couteau) (niveau expert)))
+
+(assert( niveau-habilete (profession Stripper Librarian Businessman Lawyer Scientist) (arme Gaz) (niveau expert)))
+(assert( niveau-habilete (profession Bartender Homeless Chef Judge Chemist) (arme Gaz) (niveau moyen)))
+(assert( niveau-habilete (profession Pilot Clerk Policier Jury Flight-attendant) (arme Gaz) (niveau faible)))
+
+(assert( niveau-habilete (profession Stripper Librarian Businessman Lawyer Scientist) (arme Corde) (niveau faible)))
+(assert( niveau-habilete (profession Bartender Homeless Chef Judge Chemist) (arme Corde) (niveau expert)))
+(assert( niveau-habilete (profession Pilot Clerk Policier Jury Flight-attendant) (arme Corde) (niveau moyen)))
+
+(assert( niveau-habilete (profession Stripper Librarian Businessman Lawyer Scientist) (arme Baton-de-baseball) (niveau moyen)))
+(assert( niveau-habilete (profession Bartender Homeless Chef Judge Chemist) (arme Baton-de-baseball) (niveau expert)))
+(assert( niveau-habilete (profession Pilot Clerk Policier Jury Flight-attendant) (arme Baton-de-baseball) (niveau faible)))
+
+(assert( niveau-habilete (profession Stripper Librarian Businessman Lawyer Scientist) (arme Voiture) (niveau expert)))
+(assert( niveau-habilete (profession Bartender Homeless Chef Judge Chemist) (arme Voiture) (niveau faible)))
+(assert( niveau-habilete (profession Pilot Clerk Policier Jury Flight-attendant) (arme Voiture) (niveau moyen)))
+
+(assert( niveau-habilete (profession Stripper Librarian Businessman Lawyer Scientist) (arme Moto) (niveau moyen)))
+(assert( niveau-habilete (profession Bartender Homeless Chef Judge Chemist) (arme Moto) (niveau faible)))
+(assert( niveau-habilete (profession Pilot Clerk Policier Jury Flight-attendant) (arme Moto) (niveau expert)))
+
+(assert( niveau-habilete (profession Stripper Librarian Businessman Lawyer Scientist) (arme Arsenic) (niveau moyen)))
+(assert( niveau-habilete (profession Bartender Homeless Chef Judge Chemist) (arme Arsenic) (niveau faible)))
+(assert( niveau-habilete (profession Pilot Clerk Policier Jury Flight-attendant) (arme Arsenic) (niveau expert)))
+
+(assert( niveau-habilete (profession Stripper Librarian Businessman Lawyer Scientist) (arme Marteau) (niveau expert)))
+(assert( niveau-habilete (profession Bartender Homeless Chef Judge Chemist) (arme Marteau) (niveau faible)))
+(assert( niveau-habilete (profession Pilot Clerk Policier Jury Flight-attendant) (arme Marteau) (niveau moyen)))
+
+(assert( niveau-habilete (profession Stripper Librarian Businessman Lawyer Scientist) (arme Lance-flamme) (niveau faible)))
+(assert( niveau-habilete (profession Bartender Homeless Chef Judge Chemist) (arme Lance-flamme) (niveau expert)))
+(assert( niveau-habilete (profession Pilot Clerk Policier Jury Flight-attendant) (arme Lance-flamme) (niveau moyen)))
+
+(assert( niveau-habilete (profession Stripper Librarian Businessman Lawyer Scientist) (arme Hydrogene-liquide) (niveau moyen)))
+(assert( niveau-habilete (profession Bartender Homeless Chef Judge Chemist) (arme Hydrogene-liquide) (niveau expert)))
+(assert( niveau-habilete (profession Pilot Clerk Policier Jury Flight-attendant) (arme Hydrogene-liquide) (niveau faible)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;; Query ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -244,6 +300,11 @@
 (defquery search-by-vehicule-route-temps
 	(declare (variables ?route))
 	(vehicule-route-temps (vehicule ?vehicule) (route ?route) (temps ?temps))
+)
+
+(defquery search-by-name
+	(declare (variables ?probabilite))
+	(probabilite-meurtrier (probabilite ?probabilite) (arme ?arme) (nom ?nom))
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -374,6 +435,18 @@
 	(assert(profession-suspect-vehicule-climat (vehicule ?vehicule) (profession ?profession)))
 )
 
+;Probabilite d'etre le suspect en fonction du niveau d'expertise avec l'arme du crime
+(defrule probabilite-suspect-expertise-arme
+	(declare (salience 1))
+	(armes-possible ?armes-crime)
+	(la personne ?suspect est profession ?profession)
+	(niveau-habilete (profession $?liste-profession) (arme ?armes-crime) (niveau ?niveau))
+	(niveau habilite ?niveau a une probabilite ?probabilite detre meurtrier)
+	(test (member$ ?profession $?liste-profession))
+	=>
+	(assert (probabilite-meurtrier (probabilite ?probabilite) (arme ?armes-crime) (nom ?suspect)))
+	(printout t "Le niveau d'expertise de " ?suspect " avec l'arme " ?armes-crime " est de " ?probabilite crlf)
+)
 
 ;Eliminer les lieux qui ne peuvent etre visiter
 
