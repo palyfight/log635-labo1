@@ -217,6 +217,10 @@
 	(le mort lelelel etait profession Lawyer)
 	(La personne Philippe possede dans son compte de banque entre 10001 et 25000)
 	(La perssone lelelel possedait dans son compte avant de mourir 50000 )
+	(Le cadavre a ete trouve a 16 h)
+	(La personne Philippe a été vu a 13 h)
+	(La personne lulu a été vu a 0 h)
+	(La personne Bob a été vu a 23 h)
 )
 
 ;;;;;;;;;;;;;
@@ -451,7 +455,7 @@
 	(if(= ?montant ?max) then
 		(bind ?plus-riche false)
 	)
-	(assert (possede-plus-d'argent ?plus-riche))
+	(assert (possede-plus-argent ?plus-riche))
 	(printout t ?nom-mort " possède plus d'argent que " ?nom crlf)
 
 )
@@ -534,6 +538,26 @@
 	(printout t "La probabilite que " ?suspect " ait tuer " ?mort " a cause de la classe sociale est de " ?probabilite crlf)
 )
 
+;A été vue à l'heure du crime
+(defrule a-ete-vue
+	(declare (salience 5))
+	(La personne ?nom a été vu a ?heure h)
+	(delta-time-temperature-death ?heure-meurtre)
+	=>
+	(if (< 0 (- ?heure ?heure-meurtre)) then
+		(bind ?alibi true)
+		(printout t ?nom " avait pas d'alibi a l'heure du meutre " crlf)
+	)
+	(if (> 0 (- ?heure ?heure-meurtre)) then
+		(bind ?alibi false)
+		(printout t ?nom " n'avait pas d'alibi a l'heure du meutre " crlf)
+	)
+	(if (= 0 (- ?heure ?heure-meurtre)) then
+		(bind ?alibi true)
+		(printout t ?nom " avait un alibi a l'heure du meutre " crlf)
+	)
+	(assert (a-un-alibi ?alibi))
+)
 
 ;Eliminer les lieux qui ne peuvent etre visiter
 
