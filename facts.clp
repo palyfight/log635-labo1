@@ -12,6 +12,7 @@
 (deftemplate niveau-habilete (multislot profession) (slot arme) (slot niveau))
 (deftemplate probabilite-meurtrier (slot probabilite) (slot arme) (slot nom))
 (deftemplate mental-level (slot name) (slot level))
+(deftemplate vehicule-location-tod (slot vehicule) (slot location) (slot tod))
 
 ;;;;;;;;;;;;;;
 ; Profession ;
@@ -324,6 +325,15 @@
 	(mental-level  (name ?name) (level ?level))
 )
 
+(defquery search-by-start-location
+	(declare (variables ?starts))
+	(travelling-routes (name ?name) (starts ?starts) (destination ?destination))
+)
+
+(defquery search-by-transport
+	(declare (variables ?vehicule))
+	(vehicule-location-tod (vehicule ?vehicule) (location ?location) (tod ?tod))
+)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;; Regles simples	   ;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -472,7 +482,56 @@
 	(test (member$ ?profession $?liste-profession))
 	=>
 	(assert (probabilite-meurtrier (probabilite ?probabilite) (arme ?armes-crime) (nom ?suspect)))
-	(printout t "Le niveau d'expertise de " ?suspect " avec l'arme " ?armes-crime " est de " ?probabilite crlf)
+	(printout t "Le niveau d'expertise de " ?suspect " avec l'arme " ?armes-crime " est de " ?niveau crlf)
+)
+
+;cree de fait temporaire sur le trajet des vehicules
+(defrule temp-vehicule-location-tod
+	(declare (salience 45))
+	(velocite-vehicule-climat ?vehicule ?velocite)
+	(delta-timedeath ?tod)
+	(le cadavre se trouve au lieu ?location)
+	=>
+	(assert (vehicule-location-tod (vehicule ?vehicule) (location ?location) (tod ?tod)))
+)
+
+;Trouver le lieu ou le suspect aurait pu s'echapper
+(defrule find-escape-locations
+	(declare (salience 40))
+	(le cadavre se trouve au lieu ?location)
+	?nb-vehicule <- (accumulate (bind ?count 0)
+								(bind ?count (+ ?count 1))
+								?count
+								(velocite-vehicule-climat ?vehicule ?velocite))
+	=>
+	(while (> ?nb-vehicule 0)
+		(printout t "fuck you " ?location crlf)
+		(bind ?query-escape-location (run-query* search-by-start-location ?location))
+		(if (?query-escape-location next) then
+			(bind ?location (?query-escape-location getString destination))
+			(bind ?chemin (?query-escape-location getInt name))
+									(printout t "SUPER FUCK YOU " ?chemin crlf)
+
+			(bind ?query-vehicule (run-query* search-by-vehicule-route-temps ?chemin))
+
+			(while (?query-vehicule next)
+				(bind ?vehicule (?query-vehicule getString vehicule))
+									(printout t "SUPER FUCK YOU " ?vehicule crlf)
+				(bind ?query-temp (run-query* search-by-transport ?vehicule))
+				(?query-temp next)
+				(bind ?time-deplacement (?query-vehicule getInt temps))
+				(bind ?tod (?query-temp getInt tod))
+				(if (>= (- ?time-deplacement ?tod) 0) then
+					;(assert (lieu echapper ?location))
+					;modifier query temp
+					;(bind ?nb-vehicule (- ?nb-vehicule 1))
+				else
+					;(bind ?nb-vehicule (- ?nb-vehicule 1))
+				 )
+			)
+		)
+		(bind ?nb-vehicule (- ?nb-vehicule 1))
+	)
 )
 
 ;Eliminer les lieux qui ne peuvent etre visiter
