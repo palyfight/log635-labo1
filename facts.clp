@@ -215,6 +215,8 @@
 	(La personne Philippe est une personne bon)
 	(La personne Philippe a deja commis un crime)
 	(le mort lelelel etait profession Lawyer)
+	(La personne Philippe possede dans son compte de banque entre 10001 et 25000)
+	(La perssone lelelel possedait dans son compte avant de mourir 50000 )
 )
 
 ;;;;;;;;;;;;;
@@ -420,6 +422,7 @@
 	(relation ?relation a un risque ?niveau)
 	=>
 	(printout t "Les suspect " ?suspect " a une probabilite " ?niveau " d'etre le meurtrier" crlf)
+	(assert (niveau-suspect ?niveau))
 )
 
 ;Niveau d'etat mental (bon, moyen, derange, sequel)
@@ -430,6 +433,27 @@
 	=>
 	(printout t ?nom " est une personne " ?etat crlf)
 	(assert (mental-level (name ?nom) (level ?niveau)))
+)
+
+; ------- Complex or not?
+;Est Suspect si il possède moins d'argent que le mort
+(defrule montant-disponible
+	(declare (salience 100))
+	(La personne ?nom possede dans son compte de banque entre ?min et ?max)
+	(La perssone ?nom-mort possedait dans son compte avant de mourir ?montant)
+	=>
+	(if(> ?montant ?max) then
+		(bind ?plus-riche true)
+	)
+	(if(< ?montant ?max) then
+		(bind ?plus-riche false)
+	)
+	(if(= ?montant ?max) then
+		(bind ?plus-riche false)
+	)
+	(assert (possede-plus-d'argent ?plus-riche))
+	(printout t ?nom-mort " possède plus d'argent que " ?nom crlf)
+
 )
 
 ; ------- Complex or not?
