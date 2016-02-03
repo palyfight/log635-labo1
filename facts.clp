@@ -10,6 +10,7 @@
 (deftemplate profession-suspect-vehicule-climat (slot vehicule) (slot profession))
 (deftemplate travelling-routes (slot name) (slot starts) (slot destination))
 (deftemplate niveau-habilete (multislot profession) (slot arme) (slot niveau))
+(deftemplate probabilite-meurtrier (slot probabilite) (slot arme) (slot nom))
 
 ;;;;;;;;;;;;;;
 ; Profession ;
@@ -184,6 +185,11 @@
 	(relation hostile a un risque eleve)
 )
 
+(deffacts relation-habilite-probabilite-de-meurtre
+	(niveau habilite faible a une probabilite 25 detre meurtrier)
+	(niveau habilite moyen a une probabilite 50 detre meurtrier)
+	(niveau habilite expert a une probabilite 75 detre meurtrier)	
+)
 
 (deffacts test
 	(lelelel est mort)
@@ -194,6 +200,7 @@
 	(le cadavre a une temperature 18)
 	(le cadavre a une relation amicale avec lulu)
 	(le climat de la scene est snowy)
+	(la personne lulu est profession Clerk)
 )
 
 ;;;;;;;;;;;;;
@@ -293,6 +300,11 @@
 (defquery search-by-vehicule-route-temps
 	(declare (variables ?route))
 	(vehicule-route-temps (vehicule ?vehicule) (route ?route) (temps ?temps))
+)
+
+(defquery search-by-name
+	(declare (variables ?probabilite))
+	(probabilite-meurtrier (probabilite ?probabilite) (arme ?arme) (nom ?nom))
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -423,6 +435,18 @@
 	(assert(profession-suspect-vehicule-climat (vehicule ?vehicule) (profession ?profession)))
 )
 
+;Probabilite d'etre le suspect en fonction du niveau d'expertise avec l'arme du crime
+(defrule probabilite-suspect-expertise-arme
+	(declare (salience 1))
+	(armes-possible ?armes-crime)
+	(la personne ?suspect est profession ?profession)
+	(niveau-habilete (profession $?liste-profession) (arme ?armes-crime) (niveau ?niveau))
+	(niveau habilite ?niveau a une probabilite ?probabilite detre meurtrier)
+	(test (member$ ?profession $?liste-profession))
+	=>
+	(assert (probabilite-meurtrier (probabilite ?probabilite) (arme ?armes-crime) (nom ?suspect)))
+	(printout t "Le niveau d'expertise de " ?suspect " avec l'arme " ?armes-crime " est de " ?probabilite crlf)
+)
 
 ;Eliminer les lieux qui ne peuvent etre visiter
 
