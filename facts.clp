@@ -447,7 +447,7 @@
 ; ------- Complex or not?
 ;Determiner le temps qu'un vehicule prend parcourir un chemin au complet
 (defrule temps-parcourir-chemin
-	(declare (salience 25))
+	(declare (salience 45))
 	(velocite-vehicule-climat ?vehicule ?velocite)
 	(access-route (vehicule ?vehicule) (chemin $?chemins))
 	=>
@@ -510,23 +510,25 @@
 		(if (?query-escape-location next) then
 			(bind ?location (?query-escape-location getString destination))
 			(bind ?chemin (?query-escape-location getInt name))
-									(printout t "SUPER FUCK YOU " ?chemin crlf)
+									(printout t "SUPER FUCK YOU ROUTE " ?chemin crlf)
 
 			(bind ?query-vehicule (run-query* search-by-vehicule-route-temps ?chemin))
 
 			(while (?query-vehicule next)
 				(bind ?vehicule (?query-vehicule getString vehicule))
-									(printout t "SUPER FUCK YOU " ?vehicule crlf)
-				(bind ?query-temp (run-query* search-by-transport ?vehicule))
-				(?query-temp next)
-				(bind ?time-deplacement (?query-vehicule getInt temps))
-				(bind ?tod (?query-temp getInt tod))
-				(if (>= (- ?time-deplacement ?tod) 0) then
-					;(assert (lieu echapper ?location))
-					;modifier query temp
-					;(bind ?nb-vehicule (- ?nb-vehicule 1))
-				else
-					;(bind ?nb-vehicule (- ?nb-vehicule 1))
+									(printout t "SUPER FUCK YOU VEHICULE " ?vehicule crlf)
+				(bind ?query-temp (run-query* search-by-transport avion))
+				(if (?query-temp next) then
+					(bind ?time-deplacement (?query-vehicule getInt temps))
+					(bind ?tod (?query-temp getInt tod))
+					(if (>= (- ?time-deplacement ?tod) 0) then
+						;(assert (lieu echapper ?location))
+						;modifier query temp
+						;(bind ?nb-vehicule (- ?nb-vehicule 1))
+						(printout t "salut esti")
+					else
+						;(bind ?nb-vehicule (- ?nb-vehicule 1))
+					 )
 				 )
 			)
 		)
