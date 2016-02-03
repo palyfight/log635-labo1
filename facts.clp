@@ -21,10 +21,10 @@
 (deffacts lien-revenu-profession
 	(profession Stripper est dans la classe moyenne)
 	(profession Flight attendant est dans la classe moyenne)
-	(profession Bartender est dans la classe pauvre)
+	(profession Bartender est dans la classe depourvu)
 	(profession Pilot est dans la classe riche)
-	(profession Librarian est dans la classe pauvre)
-	(profession Homeless est dans la classe pauvre)
+	(profession Librarian est dans la classe depourvu)
+	(profession Homeless est dans la classe depourvu)
 	(profession Clerk est dans la classe moyenne)
 	(profession Businessman est dans la classe riche)
 	(profession Chef est dans la classe riche)
@@ -211,8 +211,9 @@
 	(le cadavre a une temperature 18)
 	(le cadavre a une relation amicale avec lulu)
 	(le climat de la scene est snowy)
-	(la personne lulu est profession Clerk)
+	(la personne lulu est profession Homeless)
 	(La personne Philippe est une personne bon)
+	(le mort lelelel etait profession Lawyer)
 )
 
 ;;;;;;;;;;;;;
@@ -239,7 +240,7 @@
 ;Faire les relations entre les transport et revenu
 (assert(moyen-transport (Classe riche) (vehicule avion bus voiture moto helicoptere velo marche hoverboard train)))
 (assert(moyen-transport (Classe moyennes) (vehicule bus voiture moto velo marche hoverboard train)))
-(assert(moyen-transport (Classe pauvre) (vehicule velo marche)))
+(assert(moyen-transport (Classe depourvu) (vehicule velo marche)))
 
 ;Faire le lien entre les vehicule et les travelling-routes
 (assert   (access-route (vehicule avion) (chemin 13 66 95)))
@@ -474,6 +475,29 @@
 	(assert (probabilite-meurtrier (probabilite ?probabilite) (arme ?armes-crime) (nom ?suspect)))
 	(printout t "Le niveau d'expertise de " ?suspect " avec l'arme " ?armes-crime " est de " ?probabilite crlf)
 )
+
+
+;Probabilite d'etre le meurtrier en fonction des classes sociales
+(defrule probabilite-meurtrier-classe-sociale
+	(declare (salience 1))
+	(la personne ?suspect est profession ?profession-suspect)
+	(profession ?profession-suspect est dans la classe ?classe-suspect)
+	(le mort ?mort etait profession ?profession-mort)
+	(profession ?profession-mort est dans la classe ?classe-mort)
+	=>
+	(if(= 0 (str-compare ?classe-suspect ?classe-mort)) then
+		(bind ?probabilite 50)
+	)
+	(if(> 0 (str-compare ?classe-suspect ?classe-mort)) then
+		(bind ?probabilite 75)
+	)
+	(if(< 0 (str-compare ?classe-suspect ?classe-mort)) then
+		(bind ?probabilite 25)
+	)
+	(assert (probabilite-classe-social ?probabilite))
+	(printout t "La probabilite que " ?suspect " ait tuer " ?mort " a cause de la classe sociale est de " ?probabilite crlf)
+)
+
 
 ;Eliminer les lieux qui ne peuvent etre visiter
 
