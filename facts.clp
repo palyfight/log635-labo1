@@ -329,6 +329,13 @@
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;; Fonction ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(deffunction fastest-vehicule(?list-vehicules)
+)
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;; Regles simples	   ;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -504,17 +511,30 @@
 ;Determiner le vehicule le plus rapide qu'un personnage peut utiliser
 (defrule vehicule-plus-rapide
 	(declare (salience 2))
-	;(la personne ?personne est profession ?profession)	
-	;(profession ?profession est dans la classe ?classe)
-	;(moyen-transport (Classe ?classe) (vehicule $?vehicules))
-	(le climat de la scene est ?climat)
-	(Le climat ?climat desactive-vehicule $?list-vehicule)
-	(test (member$ ?vehicules ?list-vehicule))
+	(la personne ?personne est profession ?profession)	
+	(profession ?profession est dans la classe ?classe)
+	(moyen-transport (Classe ?classe) (vehicule $?vehicules))	
+	;(velocite-vehicule-climat ?vehicule ?velocite))
+	(profession-suspect-vehicule-climat (vehicule ?vehicules) (profession ?profession))
+	;(test (member$ ?vehicule ?vehicules))
+	=>
+	(bind ?vehicule-rapide fastest-vehicule(?vehicules))
+	(printout t "profession " ?profession " vehicule " ?vehicule " velocite " ?velocite crlf)
+
+
+
+
+
+
+
+	;(le climat de la scene est ?climat)
+	;(Le climat ?climat desactive-vehicule $?list-vehicule)
+
+	;?fastest-vehicule <- 0
+	;(test (member$ ?vehicules ?list-vehicule))
 	;(le vehicule ?vehicule a une velocite maximale de ?velocite)
 	;(test (member$ ?vehicule $?vehicules))
-	=>
-	;(printout t "profession " ?profession " vehicule " ?vehicule " velocite " ?velocite crlf)
-	(printout t " TESTTTTTTTTTTTTTTTTTT " ?vehicules crlf)
+	;(printout t " TESTTTTTTTTTTTTTTTTTT " ?vehicules crlf)
 )
 
 
