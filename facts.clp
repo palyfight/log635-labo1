@@ -212,6 +212,9 @@
 	(le cadavre a une relation amicale avec lulu)
 	(le climat de la scene est snowy)
 	(la personne lulu est profession Homeless)
+	(la personne lola est profession Clerk)
+	(la personne lili est profession Judge)
+	(la personne lala est profession Scientist)
 	(La personne Philippe est une personne bon)
 	(le mort lelelel etait profession Lawyer)
 )
@@ -497,6 +500,59 @@
 	(assert (probabilite-classe-social ?probabilite))
 	(printout t "La probabilite que " ?suspect " ait tuer " ?mort " a cause de la classe sociale est de " ?probabilite crlf)
 )
+
+;Determiner le vehicule le plus rapide qu'un personnage peut utiliser
+(defrule vehicule-plus-rapide
+	(declare (salience 2))
+	;(la personne ?personne est profession ?profession)	
+	;(profession ?profession est dans la classe ?classe)
+	;(moyen-transport (Classe ?classe) (vehicule $?vehicules))
+	(le climat de la scene est ?climat)
+	(Le climat ?climat desactive-vehicule $?list-vehicule)
+	(test (member$ ?vehicules ?list-vehicule))
+	;(le vehicule ?vehicule a une velocite maximale de ?velocite)
+	;(test (member$ ?vehicule $?vehicules))
+	=>
+	;(printout t "profession " ?profession " vehicule " ?vehicule " velocite " ?velocite crlf)
+	(printout t " TESTTTTTTTTTTTTTTTTTT " ?vehicules crlf)
+)
+
+
+
+
+;(deffacts lien-climat-vehicule
+;	(Le climat rainy desactive-vehicule(list marche hoverboard))
+;	(Le climat snowy desactive-vehicule (list velo moto hoverboard)) 
+;	(Le climat blizzard desactive-vehicule (list avion bus voiture moto helicoptere velo marche hoverboard))
+;	(Le climat thunderstorm desactive-vehicule (list avion helicoptere))
+;	(Le climat tsuname desactive-vehicule (list avion bus voiture moto helicoptere velo marche hoverboard train))
+;)
+
+
+
+;	(le vehicule avion a une velocite maximale de 16)
+;	(le vehicule helicoptere a une velocite maximale de 16)
+;	(le vehicule bus a une velocite maximale de 12)
+;	(le vehicule voiture a une velocite maximale de 12)
+;	(le vehicule moto a une velocite maximale de 12)
+;	(le vehicule train a une velocite maximale de 12)
+;	(le vehicule velo a une velocite maximale de 8)
+;	(le vehicule marche a une velocite maximale de 4)
+;	(le vehicule hoverboard a une velocite maximale de 4)
+
+
+;	(lelelel est mort)
+;	(la personne lulu est profession Homeless)
+;	(la personne lola est profession Clerk)
+;	(la personne lili est profession Judge)
+;	(la personne lala est profession Scientist)
+;	(La personne Philippe est une personne bon)
+;	(le mort lelelel etait profession Lawyer)
+
+
+;(assert(moyen-transport (Classe riche) (vehicule avion bus voiture moto helicoptere velo marche hoverboard train)))
+;(assert(moyen-transport (Classe moyennes) (vehicule bus voiture moto velo marche hoverboard train)))
+;(assert(moyen-transport (Classe depourvu) (vehicule velo marche)))
 
 
 ;Eliminer les lieux qui ne peuvent etre visiter
