@@ -9,6 +9,7 @@
 (deftemplate vehicule-route-temps (slot vehicule) (slot route) (slot temps))
 (deftemplate profession-suspect-vehicule-climat (slot vehicule) (slot profession))
 (deftemplate travelling-routes (slot name) (slot starts) (slot destination))
+(deftemplate mental-level (slot name) (slot level))
 
 ;;;;;;;;;;;;;;
 ; Profession ;
@@ -31,6 +32,16 @@
 	(profession Jury est dans la classe moyenne)
 	(profession Scientist est dans la classe riche)
 	(profession Chemist est dans la classe riche)
+)
+
+;;;;;;;;;;;;;;;;;
+;  Etat mental  ;
+;;;;;;;;;;;;;;;;;
+(deffacts etat-mental
+	(Etat mental est bon la personne est au niveau 1 etre suspect)
+	(Etat mental est moyen la personne est au niveau 3 etre suspect)
+	(Etat mental est derange la personne est au niveau 7 etre suspect)
+	(Etat mental est sequel la personne est au niveau 10 etre suspect)
 )
 
 ;;;;;;;;;;;;;;;;;
@@ -193,6 +204,7 @@
 	(le cadavre a une temperature 18)
 	(le cadavre a une relation amicale avec lulu)
 	(le climat de la scene est snowy)
+	(La personne Philippe est une personne bon)
 )
 
 ;;;;;;;;;;;;;
@@ -244,6 +256,11 @@
 (defquery search-by-vehicule-route-temps
 	(declare (variables ?route))
 	(vehicule-route-temps (vehicule ?vehicule) (route ?route) (temps ?temps))
+)
+
+(defquery search-by-mental-level
+	(declare (variables ?level))
+	(mental-level  (name ?name) (level ?level))
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -329,6 +346,16 @@
 	(relation ?relation a un risque ?niveau)
 	=>
 	(printout t "Les suspect " ?suspect " a une probabilite " ?niveau " d'etre le meurtrier" crlf)
+)
+
+;Niveau d'etat mental (bon, moyen, derange, sequel)
+(defrule etat-mental
+	(declare (salience 10))
+	(La personne ?nom est une personne ?etat)
+	(Etat mental est ?etat la personne est au niveau ?niveau etre suspect)
+	=>
+	(printout t ?nom " est une personne " ?etat crlf)
+	(assert (mental-level (name ?nom) (level ?niveau)))
 )
 
 ; ------- Complex or not?
