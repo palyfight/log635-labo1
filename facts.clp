@@ -213,6 +213,7 @@
 	(le climat de la scene est snowy)
 	(la personne lulu est profession Clerk)
 	(La personne Philippe est une personne bon)
+	(La personne Philippe a deja commis un crime)
 )
 
 ;;;;;;;;;;;;;
@@ -327,6 +328,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;; Regles simples	   ;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;		  Criminel 		  ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defrule is-a-criminel
+	(declare (salience 5))
+	(La personne ?nom a deja commis un crime)
+	=>
+	(printout t ?nom " a deja commis un crime il est donc un suspect" crlf)
+	(assert (is-a-criminel ?nom))
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Calculer temps de mort  ;
