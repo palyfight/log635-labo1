@@ -47,6 +47,16 @@
 )
 
 ;;;;;;;;;;;;;;;;;
+;  	  Eclat     ;
+;;;;;;;;;;;;;;;;;
+(deffacts eclat-lieu-crime
+	(Eclat retrouve sur les lieux du crime couvre un petit trajet)
+	(Eclat retrouve sur les lieux du crime couvre un moyen trajet)
+	(Eclat retrouve sur les lieux du crime couvre un gros trajet)
+	(Eclat retrouve sur les lieux du crime couvre un enorme trajet)
+)
+
+;;;;;;;;;;;;;;;;;
 ; Etat du corps ;
 ;;;;;;;;;;;;;;;;;
 
@@ -145,6 +155,23 @@
 	(blessure brulure est fait par type-armes Hydrogene-Liquide)
 )
 
+;Faire la relations entre les armes et les eclats
+(deffacts lien-arme-eclat
+	(Arme Scie fait un gros eclat)
+	(Arme Marteau fait un petit eclat)
+	(Arme Couteau fait un petit eclat)
+	(Arme Pistolet fait un moyen eclat)
+	(Arme Corde fait un petit eclat)
+	(Arme Gaz fait un petit eclat)
+	(Arme Baton-de-baseball fait un moyen eclat)
+	(Arme Voiture fait un enorme eclat)
+	(Arme Moto fait un gros eclat)
+	(Arme Arsenic fait un petit eclat)
+	(Arme Lance fait un moyen eclat)
+	(Arme flamme fait un gros eclat)
+	(Arme Hydrogene-Liquide fait un moyen eclat)
+)
+
 ;Faire la relation entre les armes et les lieux
 (deffacts lien-arme-lieu
 	(lieu hotel contient arme-lieu Poison) 
@@ -221,6 +248,7 @@
 	(La personne Philippe a été vu a 13 h)
 	(La personne lulu a été vu a 0 h)
 	(La personne Bob a été vu a 23 h)
+	(La police affirme que l'éclat sur les lieux du crime est petit)
 )
 
 ;;;;;;;;;;;;;
@@ -333,6 +361,11 @@
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;; Function ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;; Regles simples	   ;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -437,6 +470,17 @@
 	=>
 	(printout t ?nom " est une personne " ?etat crlf)
 	(assert (mental-level (name ?nom) (level ?niveau)))
+)
+
+;Arme possible selon l'eclat
+(defrule arme-selon-eclat
+	(declare (salience 120))
+	(La police affirme que l'éclat sur les lieux du crime est ?grandeur)
+	(Eclat retrouve sur les lieux du crime couvre un ?grandeur trajet)
+	(Arme ?arme fait un ?grandeur eclat)
+	=>
+	(assert (arme-possible-eclat ?arme))
+	(printout t "Selon l'éclat sur les lieu du crime l'arme possible est " ?arme crlf)
 )
 
 ; ------- Complex or not?
