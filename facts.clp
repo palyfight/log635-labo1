@@ -508,27 +508,21 @@
 		(printout t "fuck you " ?location crlf)
 		(bind ?query-escape-location (run-query* search-by-start-location ?location))
 		(if (?query-escape-location next) then
-			(bind ?location (?query-escape-location getString destination))
-			(bind ?chemin (?query-escape-location getInt name))
-									(printout t "SUPER FUCK YOU ROUTE " ?chemin crlf)
 
+			(bind ?location (?query-escape-location get destination))
+			(bind ?chemin (?query-escape-location get name))
+									(printout t "SUPER FUCK YOU ROUTE " ?chemin crlf)
+			
 			(bind ?query-vehicule (run-query* search-by-vehicule-route-temps ?chemin))
 
 			(while (?query-vehicule next)
-				(bind ?vehicule (?query-vehicule getString vehicule))
+				(bind ?vehicule (?query-vehicule get vehicule))
 									(printout t "SUPER FUCK YOU VEHICULE " ?vehicule crlf)
-				(bind ?query-temp (run-query* search-by-transport avion))
+
+				(bind ?query-temp (run-query* search-by-transport ?vehicule))
 				(if (?query-temp next) then
-					(bind ?time-deplacement (?query-vehicule getInt temps))
-					(bind ?tod (?query-temp getInt tod))
-					(if (>= (- ?time-deplacement ?tod) 0) then
-						;(assert (lieu echapper ?location))
-						;modifier query temp
-						;(bind ?nb-vehicule (- ?nb-vehicule 1))
-						(printout t "salut esti")
-					else
-						;(bind ?nb-vehicule (- ?nb-vehicule 1))
-					 )
+					(printout t "========================Fuck you esti marde" crlf)
+
 				 )
 			)
 		)
