@@ -369,19 +369,19 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;; Fonctions ;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(deffunction fastest-vehicule($?list-vehicules)
-	(bind ?count (length$ ?list-vehicules))
+(deffunction fastest-vehicule(?list-vehicules)
+	(bind ?count 0)
 	(bind ?vehicule_temp "")
 	(bind ?velocite_temp 0)
 
-	(while (> ?count 0) do
-		(bind ?vehicule1 (nth$ ?count $?list-vehicules))
+	(while (< ?count (?list-vehicules size)) do
+		(bind ?vehicule1 (?list-vehicules get ?count))
   		(printout t "LE VEHICULE DANS LA FONCTION EST " ?vehicule1 crlf)
-	;	(bind ?query-vehicule (run-query* search-by-vehicule ?vehicule1))
+		(bind ?query-vehicule (run-query* search-by-vehicule marche))
   	;	(printout t "LE VEHICULE222222222222 DANS LA FONCTION EST " ?vehicule1 crlf)
-	;   (?query-vehicule next)
-	;	(bind ?velocite1 (?query-vehicule get velocite))
-  	;	(printout t "LE VEHICULE222222222222 DANS LA FONCTION EST " ?velocite1 crlf)
+	   	(?query-vehicule next)
+		(bind ?velocite1 (?query-vehicule get velocite))
+  		(printout t "LE VEHICULE222222222222 DANS LA FONCTION EST " ?velocite1 crlf)
 ;
 ;		(bind ?vehicule2 (nth$ (- ?count 1) $?list-vehicules))
 ;		(bind ?query-vehicule (run-query* search-by-vehicule ?vehicule2))
@@ -396,7 +396,7 @@
 ;			(bind ?vehicule_temp ?vehicule2)
 ;			(bind ?velocite_temp ?velocite2)
 ;		)
-		(bind ?count (- ?count 1))
+		(bind ?count (+ ?count 1))
 	)
 ;	(return ?vehicule_temp)
 	(return ?count)
@@ -585,13 +585,14 @@
 	(declare (salience 48))
 	(la personne ?personne est profession ?profession)
 	(profession ?profession est dans la classe ?classe)
-	(moyen-transport (Classe ?classe) (vehicule $?vehicule))
-	;(velocite-vehicule-climat (vehicule ?vehicules) (velocite ?velocites))
-	;(profession-suspect-vehicule-climat (vehicule ?vehicule) (profession ?profession))
-	(le climat de la scene est ?climat)
-	(Le climat ?climat desactive-vehicule $?list-vehicule)
+	(profession-suspect-vehicule-climat (vehicule ?vehicule) (profession ?profession))
+	?myList <- (new java.util.ArrayList)
 	=>
-	(printout t "Le vehicule le plus rapide pour " ?personne " est TAMERE EN SHORT!!!!!" (fastest-vehicule $?vehicule) crlf)
+	;(bind ?myList (new java.util.ArrayList))
+	(?myList add ?vehicule)
+
+	(printout t "Il a acces au vehicule==============> "  crlf);
+	;(printout t "Le vehicule le plus rapide pour " ?personne " est TAMERE EN SHORT!!!!!" (fastest-vehicule ?myList) crlf)
 )
 
 ;Eliminer les lieux qui ne peuvent etre visiter
