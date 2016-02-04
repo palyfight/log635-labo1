@@ -1,5 +1,7 @@
 (clear)
 
+(defglobal ?*vehicule-location-tod* = (new java.util.Hashtable))
+
 (deftemplate moyen-transport (slot Classe)(multislot vehicule))
 (deftemplate type-blessure (multislot marque))
 (deftemplate access-route (slot vehicule) (multislot chemin))
@@ -12,6 +14,7 @@
 (deftemplate niveau-habilete (multislot profession) (slot arme) (slot niveau))
 (deftemplate probabilite-meurtrier (slot probabilite) (slot arme) (slot nom))
 (deftemplate mental-level (slot name) (slot level))
+(deftemplate location-escape-possible (slot location) (slot vehicule))
 
 ;;;;;;;;;;;;;;
 ; Profession ;
@@ -360,6 +363,11 @@
 	(mental-level  (name ?name) (level ?level))
 )
 
+(defquery search-by-start-location
+	(declare (variables ?starts))
+	(travelling-routes (name ?name) (starts ?starts) (destination ?destination))
+)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;; Function ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -387,7 +395,7 @@
 ;le temps que le cadavre a ete trouver 
 ;et le deces en fonction de la couleur du cadavre
 (defrule time-of-death-couleur
-  (declare (salience 5))
+  (declare (salience 99))
   (le cadavre a une couleur ?color)
   (Couleur ?color la personne est mort depuis ?time heure)
   =>
@@ -399,7 +407,7 @@
 ;le temps que le cadavre a ete trouver 
 ;et le deces en fonction de la rigidite du cadavre
 (defrule time-of-death-rigidite
-  (declare (salience 5))
+  (declare (salience 98))
   (le cadavre a une rigidite ?rigidite)
   (Rigiditer ?rigidite la personne est mort depuis ?time heure) 
   =>
@@ -411,7 +419,7 @@
 ;le temps que le cadavre a ete trouver 
 ;et le deces en fonction de la temperature du cadavre
 (defrule time-of-death-temperature
-  (declare (salience 5))
+  (declare (salience 97))
   (le cadavre a une temperature ?temperature) 
   =>
   (bind ?time (round (* (- 36.9 ?temperature) 1.2))) 
@@ -422,7 +430,7 @@
 
 ;Determiner le VRAI temps de deces
 (defrule time-of-death
-  (declare (salience 3))
+  (declare (salience 96))
   (delta-time-color-death ?time-color)
   (delta-time-rigidite-death ?time-rigidite)
   (delta-time-temperature-death ?time-temperature)
@@ -507,7 +515,7 @@
 ; ------- Complex or not?
 ;Determiner la vitesse des vehicules qui ne sont pas disabled
 (defrule vitesse-vehicule
-	(declare (salience 50))
+	(declare (salience 100))
 	(le climat de la scene est ?climat)
 	(le vehicule ?vehicule a une velocite maximale de ?vitesse)
 	(Le climat ?climat reduit la vitesse de ?facteur)
@@ -519,10 +527,20 @@
 	;(printout t "La vitesse du moyen de transport " ?vehicule " dans le climat " ?climat " est " ?velocite crlf)
 )
 
+;cree de fait temporaire sur le trajet des vehicules
+(defrule temp-vehicule-location-tod
+	(declare (salience 90))
+	(velocite-vehicule-climat ?vehicule ?velocite)
+	(delta-timedeath ?tod)
+	(le cadavre se trouve au lieu ?location)
+	=>
+	(?*vehicule-location-tod* put ?vehicule ?tod)
+)
+
 ; ------- Complex or not?
 ;Determiner le temps qu'un vehicule prend parcourir un chemin au complet
 (defrule temps-parcourir-chemin
-	(declare (salience 25))
+	(declare (salience 45))
 	(velocite-vehicule-climat ?vehicule ?velocite)
 	(access-route (vehicule ?vehicule) (chemin $?chemins))
 	=>
@@ -557,9 +575,8 @@
 	(test (member$ ?profession $?liste-profession))
 	=>
 	(assert (probabilite-meurtrier (probabilite ?probabilite) (arme ?armes-crime) (nom ?suspect)))
-	(printout t "Le niveau d'expertise de " ?suspect " avec l'arme " ?armes-crime " est de " ?probabilite crlf)
+	(printout t "Le niveau d'expertise de " ?suspect " avec l'arme " ?armes-crime " est de " ?niveau crlf)
 )
-
 
 ;Probabilite d'etre le meurtrier en fonction des classes sociales
 (defrule probabilite-meurtrier-classe-sociale
@@ -603,6 +620,45 @@
 	(assert (a-un-alibi ?alibi))
 )
 
+;Trouver le lieu ou le suspect aurait pu s'echapper
+(defrule find-escape-locations
+	(declare (salience 30))
+	(le cadavre se trouve au lieu ?location) 
+	(delta-timedeath ?time)
+	?nb-vehicule <- (accumulate (bind ?count 0)
+								(bind ?count (+ ?count 1))
+								?count
+								(velocite-vehicule-climat ?vehicule ?velocite))
+	=>
+	(bind ?used-vehicule (new java.util.ArrayList))
+	(while (> ?nb-vehicule 0)
+		(bind ?query-escape-location (run-query* search-by-start-location ?location))
+		(if (?query-escape-location next) then
+			(bind ?location (?query-escape-location get destination))
+			(bind ?chemin (?query-escape-location get name))			
+			(bind ?query-vehicule (run-query* search-by-vehicule-route-temps ?chemin))
+			(while (?query-vehicule next)
+				(bind ?vehicule (?query-vehicule get vehicule))
+				(bind ?tod (?*vehicule-location-tod* get ?vehicule))
+				(bind ?temps-de-deplacement (?query-vehicule get temps))
+				(if (not (?used-vehicule contains ?vehicule)) then
+					(if (> (- ?tod ?temps-de-deplacement) 0) then
+						(?*vehicule-location-tod* put ?vehicule (- ?tod ?temps-de-deplacement))
+						(assert (location-escape-possible (location ?location) (vehicule ?vehicule)))
+						(printout t "Le lieu " ?location " est un endroit possible ou le suspect a pu s'echaper en " ?vehicule " dans les " ?time " heures" crlf)
+					 else
+					 	(?used-vehicule add ?vehicule)
+					 	(bind ?nb-vehicule (- ?nb-vehicule 1))
+					)
+				)
+				 
+			)
+		)
+	)
+	(?*vehicule-location-tod* clear)
+	(?used-vehicule clear)
+) 
+
 ;Eliminer les lieux qui ne peuvent etre visiter
 
 ;Eliminer les chemins qui sont en construction (mettre le temps de travel a l'infini)
@@ -610,5 +666,6 @@
 ;Lieux possible  ou le suspect aurait pu s'enfuir dans un delai de temps <= temps de decouverte du cadavre - temps de deces
 
 ;Relations entre personnages
+
 
 (run)
