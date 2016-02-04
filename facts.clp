@@ -349,7 +349,25 @@
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;; Fonctions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;Determiner le temps qu'un vehicule prend parcourir un chemin au complet
+;(defrule temps-parcourir-chemin
+;	(declare (salience 25))
+;	(velocite-vehicule-climat (vehicule ?vehicule) (velocite ?velocite))
+;	(access-route (vehicule ?vehicule) (chemin $?chemins))
+;	=>
+;	(foreach ?chemin ?chemins
+;		(bind ?query-chemin (run-query* search-by-route-name ?chemin))
+;		(?query-chemin next)
+;		(bind ?distance (?query-chemin getInt km))
+;		(bind ?temps-deplacement (round (/ ?distance ?velocite)))
+;		(assert (vehicule-route-temps (vehicule ?vehicule) (route ?chemin) (temps ?temps-deplacement)))
+;	)
+;)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;; Fonctions ;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deffunction fastest-vehicule($?list-vehicules)
 	(bind ?count (length$ ?list-vehicules))
@@ -358,26 +376,30 @@
 
 	(while (> ?count 0) do
 		(bind ?vehicule1 (nth$ ?count $?list-vehicules))
-		(bind ?query-vehicule (run-query* search-by-vehicule ?vehicule1))
-		(?query-vehicule next)
-		(bind ?velocite1 (?query-vehicule1 getInt velocite))
-
-		(bind ?vehicule2 (nth$ (- ?count 1) $?list-vehicules))
-		(bind ?query-vehicule (run-query* search-by-vehicule ?vehicule2))
-		(?query-vehicule next)
-		(bind ?velocite2 (?query-vehicule getInt velocite))
-
-		(if((> ?velocite1 velocite2) && (< ?velocite_temp ?velocite1)) then
-			(bind ?vehicule_temp ?vehicule1)
-			(bind ?velocite_temp ?velocite1)
-		)
-		(if((> ?velocite2 velocite1) && (< ?velocite_temp ?velocite2)) then
-			(bind ?vehicule_temp ?vehicule2)
-			(bind ?velocite_temp ?velocite2)
-		)
+  		(printout t "LE VEHICULE DANS LA FONCTION EST " ?vehicule1 crlf)
+	;	(bind ?query-vehicule (run-query* search-by-vehicule ?vehicule1))
+  	;	(printout t "LE VEHICULE222222222222 DANS LA FONCTION EST " ?vehicule1 crlf)
+	;   (?query-vehicule next)
+	;	(bind ?velocite1 (?query-vehicule get velocite))
+  	;	(printout t "LE VEHICULE222222222222 DANS LA FONCTION EST " ?velocite1 crlf)
+;
+;		(bind ?vehicule2 (nth$ (- ?count 1) $?list-vehicules))
+;		(bind ?query-vehicule (run-query* search-by-vehicule ?vehicule2))
+;		(?query-vehicule next)
+;		(bind ?velocite2 (?query-vehicule getInt velocite))
+;
+;		(if((> ?velocite1 velocite2) && (< ?velocite_temp ?velocite1)) then
+;			(bind ?vehicule_temp ?vehicule1)
+;			(bind ?velocite_temp ?velocite1)
+;		)
+;		(if((> ?velocite2 velocite1) && (< ?velocite_temp ?velocite2)) then
+;			(bind ?vehicule_temp ?vehicule2)
+;			(bind ?velocite_temp ?velocite2)
+;		)
 		(bind ?count (- ?count 1))
 	)
-	(return ?vehicule_temp)
+;	(return ?vehicule_temp)
+	(return ?count)
 )
 
 
@@ -560,16 +582,16 @@
 
 ;Determiner le vehicule le plus rapide qu'un personnage peut utiliser
 (defrule vehicule-plus-rapide
-	(declare (salience 2))
+	(declare (salience 48))
 	(la personne ?personne est profession ?profession)
 	(profession ?profession est dans la classe ?classe)
 	(moyen-transport (Classe ?classe) (vehicule $?vehicule))
-	(velocite-vehicule-climat (vehicule ?vehicule) (velocite ?velocite))
-	(profession-suspect-vehicule-climat (vehicule ?vehicule) (profession ?profession))
-	;(le climat de la scene est ?climat)
-	;(Le climat ?climat desactive-vehicule $?list-vehicule)
+	;(velocite-vehicule-climat (vehicule ?vehicules) (velocite ?velocites))
+	;(profession-suspect-vehicule-climat (vehicule ?vehicule) (profession ?profession))
+	(le climat de la scene est ?climat)
+	(Le climat ?climat desactive-vehicule $?list-vehicule)
 	=>
-	(printout t "Le vehicule le plus rapide pour " ?personne " est TAMERE EN SHORT!!!!!" crlf); (fastest-vehicule $?vehicule) crlf)
+	(printout t "Le vehicule le plus rapide pour " ?personne " est TAMERE EN SHORT!!!!!" (fastest-vehicule $?vehicule) crlf)
 )
 
 ;Eliminer les lieux qui ne peuvent etre visiter
