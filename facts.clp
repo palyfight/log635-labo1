@@ -1,5 +1,7 @@
 (clear)
 
+(defglobal ?*vehicule-location-tod* = (new java.util.Hashtable))
+
 (deftemplate moyen-transport (slot Classe)(multislot vehicule))
 (deftemplate type-blessure (multislot marque))
 (deftemplate access-route (slot vehicule) (multislot chemin))
@@ -12,7 +14,7 @@
 (deftemplate niveau-habilete (multislot profession) (slot arme) (slot niveau))
 (deftemplate probabilite-meurtrier (slot probabilite) (slot arme) (slot nom))
 (deftemplate mental-level (slot name) (slot level))
-(deftemplate vehicule-location-tod (slot vehicule) (slot location) (slot tod))
+(deftemplate location-escape-possible (slot location) (slot vehicule))
 
 ;;;;;;;;;;;;;;
 ; Profession ;
@@ -330,11 +332,6 @@
 	(travelling-routes (name ?name) (starts ?starts) (destination ?destination))
 )
 
-(defquery search-by-transport
-	(declare (variables ?vehicule))
-	(vehicule-location-tod (vehicule ?vehicule) (location ?location) (tod ?tod))
-)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;; Regles simples	   ;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -452,7 +449,7 @@
 	(delta-timedeath ?tod)
 	(le cadavre se trouve au lieu ?location)
 	=>
-	(assert (vehicule-location-tod (vehicule ?vehicule) (location ?location) (tod ?tod)))
+	(?*vehicule-location-tod* put ?vehicule ?tod)
 )
 
 ; ------- Complex or not?
@@ -501,7 +498,8 @@
 ;Trouver le lieu ou le suspect aurait pu s'echapper
 (defrule find-escape-locations
 	(declare (salience 30))
-	(le cadavre se trouve au lieu ?location)
+	(le cadavre se trouve au lieu ?location) 
+	(delta-timedeath ?time)
 	?nb-vehicule <- (accumulate (bind ?count 0)
 								(bind ?count (+ ?count 1))
 								?count
@@ -509,44 +507,32 @@
 	=>
 	(bind ?used-vehicule (new java.util.ArrayList))
 	(while (> ?nb-vehicule 0)
-									(printout t "fuck you " ?location crlf)
 		(bind ?query-escape-location (run-query* search-by-start-location ?location))
 		(if (?query-escape-location next) then
-
 			(bind ?location (?query-escape-location get destination))
-			(bind ?chemin (?query-escape-location get name))
-									(printout t "SUPER FUCK YOU ROUTE " ?chemin crlf)
-			
+			(bind ?chemin (?query-escape-location get name))			
 			(bind ?query-vehicule (run-query* search-by-vehicule-route-temps ?chemin))
-
 			(while (?query-vehicule next)
 				(bind ?vehicule (?query-vehicule get vehicule))
-									(printout t "SUPER FUCK YOU VEHICULE " ?vehicule crlf)
-
-				(bind ?query-temp-tod (run-query* search-by-transport avion))
-				(if (?query-temp-tod next) then
-					(bind ?tod (?query-temp-tod get tod))
-					(bind ?temps-de-deplacement (?query-vehicule get temps))
-
-					(if (not (?used-vehicule contains ?vehicule)) then
-
-						(if (> (- ?tod ?temps-de-deplacement) 0) then
-							;modifier some shit
-						 else
-						 	(?used-vehicule add ?vehicule)
-						)
+				(bind ?tod (?*vehicule-location-tod* get ?vehicule))
+				(bind ?temps-de-deplacement (?query-vehicule get temps))
+				(if (not (?used-vehicule contains ?vehicule)) then
+					(if (> (- ?tod ?temps-de-deplacement) 0) then
+						(?*vehicule-location-tod* put ?vehicule (- ?tod ?temps-de-deplacement))
+						(assert (location-escape-possible (location ?location) (vehicule ?vehicule)))
+						(printout t "Le lieu " ?location " est un endroit possible ou le suspect a pu s'echaper en " ?vehicule " dans les " ?time " heures" crlf)
+					 else
+					 	(?used-vehicule add ?vehicule)
+					 	(bind ?nb-vehicule (- ?nb-vehicule 1))
 					)
-				 )
+				)
+				 
 			)
 		)
-		(bind ?nb-vehicule (- ?nb-vehicule 1))
 	)
-	(for (bind ?i 0) (< ?i (?used-vehicule size)) (++ ?i) 
-
-		(printout t "FUCK YOU ALL "(?used-vehicule get ?i) crlf)
-	)
+	(?*vehicule-location-tod* clear)
 	(?used-vehicule clear)
-)
+) 
 
 ;Eliminer les lieux qui ne peuvent etre visiter
 
@@ -555,5 +541,6 @@
 ;Lieux possible  ou le suspect aurait pu s'enfuir dans un delai de temps <= temps de decouverte du cadavre - temps de deces
 
 ;Relations entre personnages
+
 
 (run)
