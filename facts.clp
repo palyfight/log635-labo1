@@ -334,6 +334,7 @@
 	(declare (variables ?vehicule))
 	(vehicule-location-tod (vehicule ?vehicule) (location ?location) (tod ?tod))
 )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;; Regles simples	   ;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -345,7 +346,7 @@
 ;le temps que le cadavre a ete trouver 
 ;et le deces en fonction de la couleur du cadavre
 (defrule time-of-death-couleur
-  (declare (salience 5))
+  (declare (salience 99))
   (le cadavre a une couleur ?color)
   (Couleur ?color la personne est mort depuis ?time heure)
   =>
@@ -357,7 +358,7 @@
 ;le temps que le cadavre a ete trouver 
 ;et le deces en fonction de la rigidite du cadavre
 (defrule time-of-death-rigidite
-  (declare (salience 5))
+  (declare (salience 98))
   (le cadavre a une rigidite ?rigidite)
   (Rigiditer ?rigidite la personne est mort depuis ?time heure) 
   =>
@@ -369,7 +370,7 @@
 ;le temps que le cadavre a ete trouver 
 ;et le deces en fonction de la temperature du cadavre
 (defrule time-of-death-temperature
-  (declare (salience 5))
+  (declare (salience 97))
   (le cadavre a une temperature ?temperature) 
   =>
   (bind ?time (round (* (- 36.9 ?temperature) 1.2))) 
@@ -380,7 +381,7 @@
 
 ;Determiner le VRAI temps de deces
 (defrule time-of-death
-  (declare (salience 3))
+  (declare (salience 96))
   (delta-time-color-death ?time-color)
   (delta-time-rigidite-death ?time-rigidite)
   (delta-time-temperature-death ?time-temperature)
@@ -432,7 +433,7 @@
 ; ------- Complex or not?
 ;Determiner la vitesse des vehicules qui ne sont pas disabled
 (defrule vitesse-vehicule
-	(declare (salience 50))
+	(declare (salience 100))
 	(le climat de la scene est ?climat)
 	(le vehicule ?vehicule a une velocite maximale de ?vitesse)
 	(Le climat ?climat reduit la vitesse de ?facteur)
@@ -442,6 +443,16 @@
 	(bind ?velocite (* ?facteur ?vitesse))
 	(assert (velocite-vehicule-climat ?vehicule ?velocite))
 	;(printout t "La vitesse du moyen de transport " ?vehicule " dans le climat " ?climat " est " ?velocite crlf)
+)
+
+;cree de fait temporaire sur le trajet des vehicules
+(defrule temp-vehicule-location-tod
+	(declare (salience 90))
+	(velocite-vehicule-climat ?vehicule ?velocite)
+	(delta-timedeath ?tod)
+	(le cadavre se trouve au lieu ?location)
+	=>
+	(assert (vehicule-location-tod (vehicule ?vehicule) (location ?location) (tod ?tod)))
 )
 
 ; ------- Complex or not?
@@ -485,27 +496,20 @@
 	(printout t "Le niveau d'expertise de " ?suspect " avec l'arme " ?armes-crime " est de " ?niveau crlf)
 )
 
-;cree de fait temporaire sur le trajet des vehicules
-(defrule temp-vehicule-location-tod
-	(declare (salience 45))
-	(velocite-vehicule-climat ?vehicule ?velocite)
-	(delta-timedeath ?tod)
-	(le cadavre se trouve au lieu ?location)
-	=>
-	(assert (vehicule-location-tod (vehicule ?vehicule) (location ?location) (tod ?tod)))
-)
+
 
 ;Trouver le lieu ou le suspect aurait pu s'echapper
 (defrule find-escape-locations
-	(declare (salience 40))
+	(declare (salience 30))
 	(le cadavre se trouve au lieu ?location)
 	?nb-vehicule <- (accumulate (bind ?count 0)
 								(bind ?count (+ ?count 1))
 								?count
 								(velocite-vehicule-climat ?vehicule ?velocite))
 	=>
+	(bind ?used-vehicule (new java.util.ArrayList))
 	(while (> ?nb-vehicule 0)
-		(printout t "fuck you " ?location crlf)
+									(printout t "fuck you " ?location crlf)
 		(bind ?query-escape-location (run-query* search-by-start-location ?location))
 		(if (?query-escape-location next) then
 
@@ -519,15 +523,29 @@
 				(bind ?vehicule (?query-vehicule get vehicule))
 									(printout t "SUPER FUCK YOU VEHICULE " ?vehicule crlf)
 
-				(bind ?query-temp (run-query* search-by-transport ?vehicule))
-				(if (?query-temp next) then
-					(printout t "========================Fuck you esti marde" crlf)
+				(bind ?query-temp-tod (run-query* search-by-transport avion))
+				(if (?query-temp-tod next) then
+					(bind ?tod (?query-temp-tod get tod))
+					(bind ?temps-de-deplacement (?query-vehicule get temps))
 
+					(if (not (?used-vehicule contains ?vehicule)) then
+
+						(if (> (- ?tod ?temps-de-deplacement) 0) then
+							;modifier some shit
+						 else
+						 	(?used-vehicule add ?vehicule)
+						)
+					)
 				 )
 			)
 		)
 		(bind ?nb-vehicule (- ?nb-vehicule 1))
 	)
+	(for (bind ?i 0) (< ?i (?used-vehicule size)) (++ ?i) 
+
+		(printout t "FUCK YOU ALL "(?used-vehicule get ?i) crlf)
+	)
+	(?used-vehicule clear)
 )
 
 ;Eliminer les lieux qui ne peuvent etre visiter
