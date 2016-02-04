@@ -1,5 +1,8 @@
 (clear)
 
+(defglobal ?*myHash* = (new java.util.Hashtable))
+(defglobal ?*myList* = (new java.util.ArrayList))
+
 (deftemplate moyen-transport (slot Classe)(multislot vehicule))
 (deftemplate type-blessure (multislot marque))
 (deftemplate access-route (slot vehicule) (multislot chemin))
@@ -225,10 +228,10 @@
 	(le cadavre a une temperature 18)
 	(le cadavre a une relation amicale avec lulu)
 	(le climat de la scene est snowy)
-	(la personne lulu est profession Homeless)
+	;(la personne lulu est profession Homeless)
 	;(la personne lola est profession Clerk)
 	;(la personne lili est profession Judge)
-	;(la personne lala est profession Scientist)
+	(la personne lala est profession Scientist)
 	(La personne Philippe est une personne bon)
 	(le mort lelelel etait profession Lawyer)
 	(il y a indice copeaux-de-bois sur la scene du crime)
@@ -347,61 +350,6 @@
 	(declare (variables ?vehicule))
 	(velocite-vehicule-climat (vehicule ?vehicule) (velocite ?velocite))
 )
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;Determiner le temps qu'un vehicule prend parcourir un chemin au complet
-;(defrule temps-parcourir-chemin
-;	(declare (salience 25))
-;	(velocite-vehicule-climat (vehicule ?vehicule) (velocite ?velocite))
-;	(access-route (vehicule ?vehicule) (chemin $?chemins))
-;	=>
-;	(foreach ?chemin ?chemins
-;		(bind ?query-chemin (run-query* search-by-route-name ?chemin))
-;		(?query-chemin next)
-;		(bind ?distance (?query-chemin getInt km))
-;		(bind ?temps-deplacement (round (/ ?distance ?velocite)))
-;		(assert (vehicule-route-temps (vehicule ?vehicule) (route ?chemin) (temps ?temps-deplacement)))
-;	)
-;)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;; Fonctions ;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(deffunction fastest-vehicule(?list-vehicules)
-	(bind ?count 0)
-	(bind ?vehicule_temp "")
-	(bind ?velocite_temp 0)
-
-	(while (< ?count (?list-vehicules size)) do
-		(bind ?vehicule1 (?list-vehicules get ?count))
-  		(printout t "LE VEHICULE DANS LA FONCTION EST " ?vehicule1 crlf)
-		(bind ?query-vehicule (run-query* search-by-vehicule marche))
-  	;	(printout t "LE VEHICULE222222222222 DANS LA FONCTION EST " ?vehicule1 crlf)
-	   	(?query-vehicule next)
-		(bind ?velocite1 (?query-vehicule get velocite))
-  		(printout t "LE VEHICULE222222222222 DANS LA FONCTION EST " ?velocite1 crlf)
-;
-;		(bind ?vehicule2 (nth$ (- ?count 1) $?list-vehicules))
-;		(bind ?query-vehicule (run-query* search-by-vehicule ?vehicule2))
-;		(?query-vehicule next)
-;		(bind ?velocite2 (?query-vehicule getInt velocite))
-;
-;		(if((> ?velocite1 velocite2) && (< ?velocite_temp ?velocite1)) then
-;			(bind ?vehicule_temp ?vehicule1)
-;			(bind ?velocite_temp ?velocite1)
-;		)
-;		(if((> ?velocite2 velocite1) && (< ?velocite_temp ?velocite2)) then
-;			(bind ?vehicule_temp ?vehicule2)
-;			(bind ?velocite_temp ?velocite2)
-;		)
-		(bind ?count (+ ?count 1))
-	)
-;	(return ?vehicule_temp)
-	(return ?count)
-)
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;; Regles simples	   ;;;;;;;;;;;;;;;;;
@@ -535,12 +483,19 @@
 ; ------- Complex or not?
 ;Deteminer les professions qui ont access au vehicule (a partir de la liste filtrer dans velocite-vehicule)
 (defrule profession-vehicule 
-	(declare (salience 24))
+	(declare (salience 49))
 	(profession ?profession est dans la classe ?classe)
 	(moyen-transport (Classe ?classe) (vehicule $?vehicules))
 	(velocite-vehicule-climat (vehicule ?vehicule) (velocite ?velocite))
 	(test (member$ ?vehicule $?vehicules)) 
 	=>
+	(?*myList* add ?vehicule)
+	(if(?*myHash* containsValue ?profession)then
+		(?*myList* addAll (?*myHash* get ?profession) )
+		(printout t "TESTING ADDING " ((?*myHash* get ?profession) get 0) crlf)
+	)
+	(?*myHash* put ?profession ?*myList*)
+	(?*myList* clear)
 	(assert(profession-suspect-vehicule-climat (vehicule ?vehicule) (profession ?profession)))
 )
 
@@ -584,15 +539,39 @@
 (defrule vehicule-plus-rapide
 	(declare (salience 48))
 	(la personne ?personne est profession ?profession)
-	(profession ?profession est dans la classe ?classe)
-	(profession-suspect-vehicule-climat (vehicule ?vehicule) (profession ?profession))
-	?myList <- (new java.util.ArrayList)
 	=>
-	;(bind ?myList (new java.util.ArrayList))
-	(?myList add ?vehicule)
+	(bind ?count 0)
+	(bind ?vehicule_temp "")
+	(bind ?velocite_temp 0)
 
-	(printout t "Il a acces au vehicule==============> "  crlf);
-	;(printout t "Le vehicule le plus rapide pour " ?personne " est TAMERE EN SHORT!!!!!" (fastest-vehicule ?myList) crlf)
+	(foreach ?profession (?*myHash* keySet)
+		(bind ?*myList* (?*myHash* get ?profession))
+		(while (< ?count (?*myList* size)) do
+			(bind ?vehicule1 (?*myList* get ?count))
+			(bind ?query-vehicule (run-query* search-by-vehicule marche))
+	   		(?query-vehicule next)
+			(bind ?velocite1 (?query-vehicule getInt velocite))
+  			(bind ?vehicule_temp ?vehicule1)
+
+  			(if(> 1 (?*myList* size)) then
+				(bind ?vehicule2 (nth$ (+ ?count 1) $?*myList*))
+				(bind ?query-vehicule (run-query* search-by-vehicule ?vehicule2))
+				(?query-vehicule next)
+				(bind ?velocite2 (?query-vehicule getInt velocite))
+
+				(if((> ?velocite1 velocite2) && (< ?velocite_temp ?velocite1)) then
+					(bind ?vehicule_temp ?vehicule1)
+					(bind ?velocite_temp ?velocite1)
+				)
+				(if((> ?velocite2 velocite1) && (< ?velocite_temp ?velocite2)) then
+					(bind ?vehicule_temp ?vehicule2)
+					(bind ?velocite_temp ?velocite2)
+				)
+  			)
+			(bind ?count (+ ?count 1))
+		)
+		(printout t "Le vehicule le plus rapide pour " ?profession " est " ?vehicule_temp crlf)
+	)
 )
 
 ;Eliminer les lieux qui ne peuvent etre visiter
