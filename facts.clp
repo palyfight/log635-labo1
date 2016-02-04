@@ -10,7 +10,7 @@
 (deftemplate profession-suspect-vehicule-climat (slot vehicule) (slot profession))
 (deftemplate travelling-routes (slot name) (slot starts) (slot destination))
 (deftemplate niveau-habilete (multislot profession) (slot arme) (slot niveau))
-(deftemplate probabilite-meurtrier (slot probabilite) (slot arme) (slot nom))
+(deftemplate expertise-arme (slot expertise) (slot arme) (slot nom))
 (deftemplate mental-level (slot name) (slot level))
 
 ;;;;;;;;;;;;;;
@@ -133,16 +133,29 @@
 	(blessure asphyxie est fait par type-armes Corde)
 	(blessure asphyxie est fait par type-armes Gaz)
 	(blessure strangulation est fait par type-armes Corde)
-	(blessure contusions est fait par type-armes Baton-de-baseball Marteau)
-	(blessure fractures est fait par type-armes Baton-de-baseball )
+	(blessure contusions est fait par type-armes Marteau)
+	(blessure contusions est fait par type-armes Baton-de-baseball)
+	(blessure fractures est fait par type-armes Baton-de-baseball)
 	(blessure fractures est fait par type-armes Voiture )
 	(blessure fractures est fait par type-armes Moto )
 	(blessure fractures est fait par type-armes Marteau)
 	(blessure decomposition est fait par type-armes Arsenic)
 	(blessure ecchymoses est fait par type-armes Marteau)
-	(blessure brulure est fait par type-armes Lance)
-	(blessure brulure est fait par type-armes-flamme)
+	(blessure brulure est fait par type-armes Lance-flamme)
 	(blessure brulure est fait par type-armes Hydrogene-Liquide)
+)
+
+;Faire la relation entre les indices sur la scene du crime et les armes
+(deffacts lien-indice-arme
+	(indice glace est fait par arme (list Hydrogene-Liquide))
+	(indice brulures est fait par arme (list Lance-flamme))
+	(indice molecules-arsenic est fait par arme (list Arsenic))
+	(indice debris est fait par arme (list Moto Voiture))
+	(indice copeaux-de-bois est fait par arme (list Baton-de-baseball))
+	(indice fils est fait par arme (list Corde))
+	(indice odeur-de-gaz est fait par arme (list Gaz))
+	(indice douilles est fait par arme (list Pistolet))
+	(indice aucun est fait par arme (list Scie Marteau Couteau))
 )
 
 ;Faire la relation entre les armes et les lieux
@@ -212,11 +225,12 @@
 	(le cadavre a une relation amicale avec lulu)
 	(le climat de la scene est snowy)
 	(la personne lulu est profession Homeless)
-	(la personne lola est profession Clerk)
-	(la personne lili est profession Judge)
-	(la personne lala est profession Scientist)
+	;(la personne lola est profession Clerk)
+	;(la personne lili est profession Judge)
+	;(la personne lala est profession Scientist)
 	(La personne Philippe est une personne bon)
 	(le mort lelelel etait profession Lawyer)
+	(il y a indice copeaux-de-bois sur la scene du crime)
 )
 
 ;;;;;;;;;;;;;
@@ -320,7 +334,7 @@
 
 (defquery search-by-name
 	(declare (variables ?probabilite))
-	(probabilite-meurtrier (probabilite ?probabilite) (arme ?arme) (nom ?nom))
+	(expertise-arme (expertise ?probabilite) (arme ?arme) (nom ?nom))
 )
 
 (defquery search-by-mental-level
@@ -396,6 +410,9 @@
 	(declare (salience 10))
 	(le cadavre a des ?blessures)
 	(blessure ?blessures est fait par type-armes ?armes)
+	(il y a indice ?indice sur la scene du crime)
+	(indice ?indice est fait par arme $?armes2)
+	(test (member$ ?armes ?armes2))
 	=>
 	(printout t "arme du crime possible est " ?armes crlf)
 	(assert (armes-possible ?armes))
@@ -474,7 +491,7 @@
 )
 
 ;Probabilite d'etre le suspect en fonction du niveau d'expertise avec l'arme du crime
-(defrule probabilite-suspect-expertise-arme
+(defrule niveau-expertise-arme
 	(declare (salience 1))
 	(armes-possible ?armes-crime)
 	(la personne ?suspect est profession ?profession)
@@ -482,7 +499,7 @@
 	(niveau habilite ?niveau a une probabilite ?probabilite detre meurtrier)
 	(test (member$ ?profession $?liste-profession))
 	=>
-	(assert (probabilite-meurtrier (probabilite ?probabilite) (arme ?armes-crime) (nom ?suspect)))
+	(assert (expertise-arme (expertise ?probabilite) (arme ?armes-crime) (nom ?suspect)))
 	(printout t "Le niveau d'expertise de " ?suspect " avec l'arme " ?armes-crime " est de " ?probabilite crlf)
 )
 
@@ -507,72 +524,6 @@
 	(assert (probabilite-classe-social ?probabilite))
 	(printout t "La probabilite que " ?suspect " ait tuer " ?mort " a cause de la classe sociale est de " ?probabilite crlf)
 )
-
-;Determiner le vehicule le plus rapide qu'un personnage peut utiliser
-(defrule vehicule-plus-rapide
-	(declare (salience 2))
-	(la personne ?personne est profession ?profession)	
-	(profession ?profession est dans la classe ?classe)
-	(moyen-transport (Classe ?classe) (vehicule $?vehicules))	
-	;(velocite-vehicule-climat ?vehicule ?velocite))
-	(profession-suspect-vehicule-climat (vehicule ?vehicules) (profession ?profession))
-	;(test (member$ ?vehicule ?vehicules))
-	=>
-	(bind ?vehicule-rapide fastest-vehicule(?vehicules))
-	(printout t "profession " ?profession " vehicule " ?vehicule " velocite " ?velocite crlf)
-
-
-
-
-
-
-
-	;(le climat de la scene est ?climat)
-	;(Le climat ?climat desactive-vehicule $?list-vehicule)
-
-	;?fastest-vehicule <- 0
-	;(test (member$ ?vehicules ?list-vehicule))
-	;(le vehicule ?vehicule a une velocite maximale de ?velocite)
-	;(test (member$ ?vehicule $?vehicules))
-	;(printout t " TESTTTTTTTTTTTTTTTTTT " ?vehicules crlf)
-)
-
-
-
-
-;(deffacts lien-climat-vehicule
-;	(Le climat rainy desactive-vehicule(list marche hoverboard))
-;	(Le climat snowy desactive-vehicule (list velo moto hoverboard)) 
-;	(Le climat blizzard desactive-vehicule (list avion bus voiture moto helicoptere velo marche hoverboard))
-;	(Le climat thunderstorm desactive-vehicule (list avion helicoptere))
-;	(Le climat tsuname desactive-vehicule (list avion bus voiture moto helicoptere velo marche hoverboard train))
-;)
-
-
-
-;	(le vehicule avion a une velocite maximale de 16)
-;	(le vehicule helicoptere a une velocite maximale de 16)
-;	(le vehicule bus a une velocite maximale de 12)
-;	(le vehicule voiture a une velocite maximale de 12)
-;	(le vehicule moto a une velocite maximale de 12)
-;	(le vehicule train a une velocite maximale de 12)
-;	(le vehicule velo a une velocite maximale de 8)
-;	(le vehicule marche a une velocite maximale de 4)
-;	(le vehicule hoverboard a une velocite maximale de 4)
-
-
-;	(lelelel est mort)
-;	(la personne lulu est profession Homeless)
-;	(la personne lola est profession Clerk)
-;	(la personne lili est profession Judge)
-;	(la personne lala est profession Scientist)
-;	(La personne Philippe est une personne bon)
-;	(le mort lelelel etait profession Lawyer)
-
-
-;(assert(moyen-transport (Classe riche) (vehicule avion bus voiture moto helicoptere velo marche hoverboard train)))
-;(assert(moyen-transport (Classe moyennes) (vehicule bus voiture moto velo marche hoverboard train)))
-;(assert(moyen-transport (Classe depourvu) (vehicule velo marche)))
 
 
 ;Eliminer les lieux qui ne peuvent etre visiter
