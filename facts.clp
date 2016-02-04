@@ -450,6 +450,14 @@
 	(assert (armes-possible ?armes))
 )
 
+(defrule arme-du-crime-selon-eclat-blessure
+	(declare (salience 2))
+	(armes-possible ?arme)
+	(arme-possible-eclat ?arme)
+	=>
+	(printout t ?arme crlf)
+)
+
 ;Lieux possible pour armes du crime
 (defrule location-arme
 	(declare (salience 9))
@@ -524,7 +532,7 @@
 	=>
 	(bind ?velocite (* ?facteur ?vitesse))
 	(assert (velocite-vehicule-climat ?vehicule ?velocite))
-	;(printout t "La vitesse du moyen de transport " ?vehicule " dans le climat " ?climat " est " ?velocite crlf)
+	(printout t "La vitesse du moyen de transport " ?vehicule " dans le climat " ?climat " est " ?velocite crlf)
 )
 
 ;cree de fait temporaire sur le trajet des vehicules
