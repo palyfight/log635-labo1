@@ -1,5 +1,5 @@
 (deffacts General
-	(La police affirme que l'éclat sur les lieux du crime est petit)
+	(La police affirme que l'éclat sur les lieux du crime est moyen)
 	(le climat de la scene est snowy)
 	(il y a indice copeaux-de-bois sur la scene du crime)
 )
@@ -7,11 +7,11 @@
 (deffacts Linda
 	(Linda est mort)
 	(le mort Linda etait profession Stripper)
-	(le cadavre a ete trouve dans au parc)
-	(le cadavre a des fracture)
+	(le cadavre se trouve au lieu parc)
+	(le cadavre a des fractures)
 	(le cadavre a une couleur pale)
 	(le cadavre a une rigidite maximale)
-	(le cadavre a une temperature de 20)
+	(le cadavre a une temperature 20)
 	(La personne Linda possedait dans son compte avant de mourir 100000)
 	(le cadavre a ete trouve a 23 h)
 	(le cadavre a une relation hostile avec Marc)
@@ -41,7 +41,8 @@
 	(la personne Jean-Guy est profession Pilot)
 	(La personne Jean-Guy a deja commis un crime)
 	(La personne Jean-Guy est une personne sequel)
-	(la personne Jean-Guy est au lieu courthouse)
+	(la personne Jean-Guy est au lieu stripclub)
 	(La personne Jean-Guy possede dans son compte de banque entre 200000 et 500000)
 	(La personne Jean-Guy a été vu a 22 h)
 )
+
