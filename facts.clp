@@ -1,5 +1,7 @@
 (clear)
 
+(defglobal ?*myHash* = (new java.util.Hashtable))
+(defglobal ?*myList* = (new java.util.ArrayList))
 (defglobal ?*vehicule-location-tod* = (new java.util.Hashtable))
 
 (deftemplate moyen-transport (slot Classe)(multislot vehicule))
@@ -9,11 +11,12 @@
 (deftemplate lieu-cadavre (slot lieu-cadavre))
 (deftemplate route (slot name) (slot km))
 (deftemplate vehicule-route-temps (slot vehicule) (slot route) (slot temps))
-(deftemplate profession-suspect-vehicule-climat (slot vehicule) (slot profession))
+(deftemplate profession-suspect-vehicule-climat (slot vehicule) (slot profession) (slot velocite))
 (deftemplate travelling-routes (slot name) (slot starts) (slot destination))
 (deftemplate niveau-habilete (multislot profession) (slot arme) (slot niveau))
-(deftemplate probabilite-meurtrier (slot probabilite) (slot arme) (slot nom))
+(deftemplate expertise-arme (slot expertise) (slot arme) (slot nom))
 (deftemplate mental-level (slot name) (slot level))
+(deftemplate velocite-vehicule-climat (slot vehicule) (slot velocite))
 (deftemplate location-escape-possible (slot location) (slot vehicule))
 
 ;;;;;;;;;;;;;;
@@ -146,16 +149,29 @@
 	(blessure asphyxie est fait par type-armes Corde)
 	(blessure asphyxie est fait par type-armes Gaz)
 	(blessure strangulation est fait par type-armes Corde)
-	(blessure contusions est fait par type-armes Baton-de-baseball Marteau)
-	(blessure fractures est fait par type-armes Baton-de-baseball )
+	(blessure contusions est fait par type-armes Marteau)
+	(blessure contusions est fait par type-armes Baton-de-baseball)
+	(blessure fractures est fait par type-armes Baton-de-baseball)
 	(blessure fractures est fait par type-armes Voiture )
 	(blessure fractures est fait par type-armes Moto )
 	(blessure fractures est fait par type-armes Marteau)
 	(blessure decomposition est fait par type-armes Arsenic)
 	(blessure ecchymoses est fait par type-armes Marteau)
-	(blessure brulure est fait par type-armes Lance)
-	(blessure brulure est fait par type-armes-flamme)
+	(blessure brulure est fait par type-armes Lance-flamme)
 	(blessure brulure est fait par type-armes Hydrogene-Liquide)
+)
+
+;Faire la relation entre les indices sur la scene du crime et les armes
+(deffacts lien-indice-arme
+	(indice glace est fait par arme (list Hydrogene-Liquide))
+	(indice brulures est fait par arme (list Lance-flamme))
+	(indice molecules-arsenic est fait par arme (list Arsenic))
+	(indice debris est fait par arme (list Moto Voiture))
+	(indice copeaux-de-bois est fait par arme (list Baton-de-baseball))
+	(indice fils est fait par arme (list Corde))
+	(indice odeur-de-gaz est fait par arme (list Gaz))
+	(indice douilles est fait par arme (list Pistolet))
+	(indice aucun est fait par arme (list Scie Marteau Couteau))
 )
 
 ;Faire la relations entre les armes et les eclats
@@ -242,9 +258,13 @@
 	(le cadavre a une relation amicale avec lulu)
 	(le climat de la scene est snowy)
 	(la personne lulu est profession Homeless)
+	(la personne lola est profession Clerk)
+	(la personne lili est profession Judge)
+	(la personne lala est profession Scientist)
 	(La personne Philippe est une personne bon)
 	(La personne Philippe a deja commis un crime)
 	(le mort lelelel etait profession Lawyer)
+	(il y a indice copeaux-de-bois sur la scene du crime)
 	(La personne Philippe possede dans son compte de banque entre 10001 et 25000)
 	(La perssone lelelel possedait dans son compte avant de mourir 50000 )
 	(Le cadavre a ete trouve a 16 h)
@@ -355,7 +375,7 @@
 
 (defquery search-by-name
 	(declare (variables ?probabilite))
-	(probabilite-meurtrier (probabilite ?probabilite) (arme ?arme) (nom ?nom))
+	(expertise-arme (expertise ?probabilite) (arme ?arme) (nom ?nom))
 )
 
 (defquery search-by-mental-level
@@ -363,15 +383,20 @@
 	(mental-level  (name ?name) (level ?level))
 )
 
+(defquery search-by-vehicule
+	(declare (variables ?vehicule))
+	(velocite-vehicule-climat (vehicule ?vehicule) (velocite ?velocite))
+)
+
+(defquery get-profession-vehicule-climat
+	(declare (variables ?profession))
+	(profession-suspect-vehicule-climat (vehicule ?vehicule) (profession ?profession) (velocite ?velocite))
+)
+
 (defquery search-by-start-location
 	(declare (variables ?starts))
 	(travelling-routes (name ?name) (starts ?starts) (destination ?destination))
 )
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;; Function ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;; Regles simples	   ;;;;;;;;;;;;;;;;;
@@ -445,6 +470,9 @@
 	(declare (salience 10))
 	(le cadavre a des ?blessures)
 	(blessure ?blessures est fait par type-armes ?armes)
+	(il y a indice ?indice sur la scene du crime)
+	(indice ?indice est fait par arme $?armes2)
+	(test (member$ ?armes ?armes2))
 	=>
 	(printout t "arme du crime possible est " ?armes crlf)
 	(assert (armes-possible ?armes))
@@ -531,14 +559,14 @@
 	(test (not (member$ ?vehicule $?list-desactive-vehicule)))
 	=>
 	(bind ?velocite (* ?facteur ?vitesse))
-	(assert (velocite-vehicule-climat ?vehicule ?velocite))
-	(printout t "La vitesse du moyen de transport " ?vehicule " dans le climat " ?climat " est " ?velocite crlf)
+	(assert (velocite-vehicule-climat (vehicule ?vehicule) (velocite ?velocite)))
+	;(printout t "La vitesse du moyen de transport " ?vehicule " dans le climat " ?climat " est " ?velocite crlf)
 )
 
 ;cree de fait temporaire sur le trajet des vehicules
 (defrule temp-vehicule-location-tod
 	(declare (salience 90))
-	(velocite-vehicule-climat ?vehicule ?velocite)
+	(velocite-vehicule-climat (vehicule ?vehicule) (vehicule ?velocite))
 	(delta-timedeath ?tod)
 	(le cadavre se trouve au lieu ?location)
 	=>
@@ -549,7 +577,7 @@
 ;Determiner le temps qu'un vehicule prend parcourir un chemin au complet
 (defrule temps-parcourir-chemin
 	(declare (salience 45))
-	(velocite-vehicule-climat ?vehicule ?velocite)
+	(velocite-vehicule-climat (vehicule ?vehicule) (velocite ?velocite))
 	(access-route (vehicule ?vehicule) (chemin $?chemins))
 	=>
 	(foreach ?chemin ?chemins
@@ -564,17 +592,37 @@
 ; ------- Complex or not?
 ;Deteminer les professions qui ont access au vehicule (a partir de la liste filtrer dans velocite-vehicule)
 (defrule profession-vehicule 
-	(declare (salience 24))
+	(declare (salience 49))
 	(profession ?profession est dans la classe ?classe)
 	(moyen-transport (Classe ?classe) (vehicule $?vehicules))
-	(velocite-vehicule-climat ?vehicule ?velocite)
+	(velocite-vehicule-climat (vehicule ?vehicule) (velocite ?velocite))
 	(test (member$ ?vehicule $?vehicules)) 
 	=>
-	(assert(profession-suspect-vehicule-climat (vehicule ?vehicule) (profession ?profession)))
+	(assert(profession-suspect-vehicule-climat (vehicule ?vehicule) (profession ?profession) (velocite ?velocite)))
+)
+
+;Determiner le vehicule le plus rapide qu'un personnage peut utiliser
+(defrule vehicule-plus-rapide
+	(declare (salience 48))
+	(la personne ?personne est profession ?profession)
+	=>
+	(bind ?result (run-query* get-profession-vehicule-climat ?profession))
+	(bind ?max 0)
+	(bind ?fastest-vehicule marche)
+	(while (?result next) do
+	    (bind ?velocite (?result get velocite))
+	   	(bind ?vehicule (?result get vehicule))
+	    (if (> ?velocite ?max) then 
+	    	(bind ?fastest-vehicule ?vehicule)
+	    	(bind ?max ?velocite)
+	    )
+	)
+	(printout t "Le vehicule le plus rapide pour " ?personne " est " ?fastest-vehicule crlf)
+	(assert (suspect-fastest-vehicule name ?personne vehicule ?fastest-vehicule))
 )
 
 ;Probabilite d'etre le suspect en fonction du niveau d'expertise avec l'arme du crime
-(defrule probabilite-suspect-expertise-arme
+(defrule niveau-expertise-arme
 	(declare (salience 1))
 	(armes-possible ?armes-crime)
 	(la personne ?suspect est profession ?profession)
@@ -582,8 +630,8 @@
 	(niveau habilite ?niveau a une probabilite ?probabilite detre meurtrier)
 	(test (member$ ?profession $?liste-profession))
 	=>
-	(assert (probabilite-meurtrier (probabilite ?probabilite) (arme ?armes-crime) (nom ?suspect)))
-	(printout t "Le niveau d'expertise de " ?suspect " avec l'arme " ?armes-crime " est de " ?niveau crlf)
+	(assert (expertise-arme (expertise ?probabilite) (arme ?armes-crime) (nom ?suspect)))
+	(printout t "Le niveau d'expertise de " ?suspect " avec l'arme " ?armes-crime " est de " ?probabilite crlf)
 )
 
 ;Probabilite d'etre le meurtrier en fonction des classes sociales
@@ -636,7 +684,7 @@
 	?nb-vehicule <- (accumulate (bind ?count 0)
 								(bind ?count (+ ?count 1))
 								?count
-								(velocite-vehicule-climat ?vehicule ?velocite))
+								(velocite-vehicule-climat (vehicule ?vehicule) (velocite ?velocite)))
 	=>
 	(bind ?used-vehicule (new java.util.ArrayList))
 	(while (> ?nb-vehicule 0)
