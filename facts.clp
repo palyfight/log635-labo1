@@ -10,7 +10,7 @@
 (deftemplate lieu-cadavre (slot lieu-cadavre))
 (deftemplate route (slot name) (slot km))
 (deftemplate vehicule-route-temps (slot vehicule) (slot route) (slot temps))
-(deftemplate profession-suspect-vehicule-climat (slot vehicule) (slot profession))
+(deftemplate profession-suspect-vehicule-climat (slot vehicule) (slot profession) (slot velocite))
 (deftemplate travelling-routes (slot name) (slot starts) (slot destination))
 (deftemplate niveau-habilete (multislot profession) (slot arme) (slot niveau))
 (deftemplate expertise-arme (slot expertise) (slot arme) (slot nom))
@@ -228,9 +228,9 @@
 	(le cadavre a une temperature 18)
 	(le cadavre a une relation amicale avec lulu)
 	(le climat de la scene est snowy)
-	;(la personne lulu est profession Homeless)
-	;(la personne lola est profession Clerk)
-	;(la personne lili est profession Judge)
+	(la personne lulu est profession Homeless)
+	(la personne lola est profession Clerk)
+	(la personne lili est profession Judge)
 	(la personne lala est profession Scientist)
 	(La personne Philippe est une personne bon)
 	(le mort lelelel etait profession Lawyer)
@@ -349,6 +349,11 @@
 (defquery search-by-vehicule
 	(declare (variables ?vehicule))
 	(velocite-vehicule-climat (vehicule ?vehicule) (velocite ?velocite))
+)
+
+(defquery get-profession-vehicule-climat
+	(declare (variables ?profession))
+	(profession-suspect-vehicule-climat (vehicule ?vehicule) (profession ?profession) (velocite ?velocite))
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -489,14 +494,27 @@
 	(velocite-vehicule-climat (vehicule ?vehicule) (velocite ?velocite))
 	(test (member$ ?vehicule $?vehicules)) 
 	=>
-	(?*myList* add ?vehicule)
-	(if(?*myHash* containsValue ?profession)then
-		(?*myList* addAll (?*myHash* get ?profession) )
-		(printout t "TESTING ADDING " ((?*myHash* get ?profession) get 0) crlf)
+	(assert(profession-suspect-vehicule-climat (vehicule ?vehicule) (profession ?profession) (velocite ?velocite)))
+)
+
+;Determiner le vehicule le plus rapide qu'un personnage peut utiliser
+(defrule vehicule-plus-rapide
+	(declare (salience 48))
+	(la personne ?personne est profession ?profession)
+	=>
+	(bind ?result (run-query* get-profession-vehicule-climat ?profession))
+	(bind ?max 0)
+	(bind ?fastest-vehicule marche)
+	(while (?result next) do
+	    (bind ?velocite (?result get velocite))
+	   	(bind ?vehicule (?result get vehicule))
+	    (if (> ?velocite ?max) then 
+	    	(bind ?fastest-vehicule ?vehicule)
+	    	(bind ?max ?velocite)
+	    )
 	)
-	(?*myHash* put ?profession ?*myList*)
-	(?*myList* clear)
-	(assert(profession-suspect-vehicule-climat (vehicule ?vehicule) (profession ?profession)))
+	(printout t "Le vehicule le plus rapide pour " ?personne " est " ?fastest-vehicule crlf)
+	(assert (suspect-fastest-vehicule name ?personne vehicule ?fastest-vehicule))
 )
 
 ;Probabilite d'etre le suspect en fonction du niveau d'expertise avec l'arme du crime
@@ -534,45 +552,6 @@
 	(printout t "La probabilite que " ?suspect " ait tuer " ?mort " a cause de la classe sociale est de " ?probabilite crlf)
 )
 
-
-;Determiner le vehicule le plus rapide qu'un personnage peut utiliser
-(defrule vehicule-plus-rapide
-	(declare (salience 48))
-	(la personne ?personne est profession ?profession)
-	=>
-	(bind ?count 0)
-	(bind ?vehicule_temp "")
-	(bind ?velocite_temp 0)
-
-	(foreach ?profession (?*myHash* keySet)
-		(bind ?*myList* (?*myHash* get ?profession))
-		(while (< ?count (?*myList* size)) do
-			(bind ?vehicule1 (?*myList* get ?count))
-			(bind ?query-vehicule (run-query* search-by-vehicule marche))
-	   		(?query-vehicule next)
-			(bind ?velocite1 (?query-vehicule getInt velocite))
-  			(bind ?vehicule_temp ?vehicule1)
-
-  			(if(> 1 (?*myList* size)) then
-				(bind ?vehicule2 (nth$ (+ ?count 1) $?*myList*))
-				(bind ?query-vehicule (run-query* search-by-vehicule ?vehicule2))
-				(?query-vehicule next)
-				(bind ?velocite2 (?query-vehicule getInt velocite))
-
-				(if((> ?velocite1 velocite2) && (< ?velocite_temp ?velocite1)) then
-					(bind ?vehicule_temp ?vehicule1)
-					(bind ?velocite_temp ?velocite1)
-				)
-				(if((> ?velocite2 velocite1) && (< ?velocite_temp ?velocite2)) then
-					(bind ?vehicule_temp ?vehicule2)
-					(bind ?velocite_temp ?velocite2)
-				)
-  			)
-			(bind ?count (+ ?count 1))
-		)
-		(printout t "Le vehicule le plus rapide pour " ?profession " est " ?vehicule_temp crlf)
-	)
-)
 
 ;Eliminer les lieux qui ne peuvent etre visiter
 
