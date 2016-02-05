@@ -18,6 +18,7 @@
 (deftemplate mental-level (slot name) (slot level))
 (deftemplate velocite-vehicule-climat (slot vehicule) (slot velocite))
 (deftemplate location-escape-possible (slot location) (slot vehicule))
+(deftemplate personne-niveau-criminalite (slot nom) (slot niveau))
 
 ;;;;;;;;;;;;;;
 ; Profession ;
@@ -263,10 +264,11 @@
 	(la personne lala est profession Scientist)
 	(La personne Philippe est une personne bon)
 	(La personne Philippe a deja commis un crime)
+	(le cadavre a une relation hostile avec Philippe)
 	(le mort lelelel etait profession Lawyer)
 	(il y a indice copeaux-de-bois sur la scene du crime)
 	(La personne Philippe possede dans son compte de banque entre 10001 et 25000)
-	(La perssone lelelel possedait dans son compte avant de mourir 50000 )
+	(La personne lelelel possedait dans son compte avant de mourir 50000 )
 	(Le cadavre a ete trouve a 16 h)
 	(La personne Philippe a été vu a 13 h)
 	(La personne lulu a été vu a 0 h)
@@ -496,6 +498,15 @@
 	(assert (lieu-arme-suspect ?lieux))
 )
 
+(defrule niveau-criminel
+	(declare (salience 99))
+	(is-a-criminel ?nom)
+	(possede-moins-argent ?moins-riche ?nom)
+	=>
+	(assert (personne-niveau-criminalite (nom ?nom) (niveau 10)) )
+	(printout t ?nom " à un niveau de criminalite de " 10 crlf)
+)
+
 ;Niveau de suspects (low, med, high)
 (defrule niveau-suspect
 	(declare (salience 3))
@@ -503,7 +514,24 @@
 	(relation ?relation a un risque ?niveau)
 	=>
 	(printout t "Les suspect " ?suspect " a une probabilite " ?niveau " d'etre le meurtrier" crlf)
-	(assert (niveau-suspect ?niveau))
+	(assert (niveau-suspect ?suspect ?niveau))
+)
+
+(defrule niveau-suspect-niveau-criminel
+	(declare (salience 95))
+	(niveau-suspect ?nom ?lvl)
+	?suspect <- (personne-niveau-criminalite (nom ?nom-suspect) (niveau ?niveau))
+	(test (eq ?nom ?nom-suspect))
+	=>
+	(if (eq ?lvl faible) then
+		(modify ?suspect (niveau 20))
+	)
+	(if (eq ?lvl neutre) then
+		(modify ?suspect (niveau 50))
+	)
+	(if (eq ?lvl eleve) then
+		(modify ?suspect (niveau 75))
+	)
 )
 
 ;Niveau d'etat mental (bon, moyen, derange, sequel)
@@ -529,21 +557,21 @@
 
 ; ------- Complex or not?
 ;Est Suspect si il possède moins d'argent que le mort
-(defrule montant-disponible
+(defrule mort-est-plus-riche
 	(declare (salience 100))
 	(La personne ?nom possede dans son compte de banque entre ?min et ?max)
-	(La perssone ?nom-mort possedait dans son compte avant de mourir ?montant)
+	(La personne ?nom-mort possedait dans son compte avant de mourir ?montant)
 	=>
 	(if(> ?montant ?max) then
-		(bind ?plus-riche true)
+		(bind ?moins-riche true)
 	)
 	(if(< ?montant ?max) then
-		(bind ?plus-riche false)
+		(bind ?moins-riche false)
 	)
 	(if(= ?montant ?max) then
-		(bind ?plus-riche false)
+		(bind ?moins-riche false)
 	)
-	(assert (possede-plus-argent ?plus-riche))
+	(assert (possede-moins-argent ?moins-riche ?nom))
 	(printout t ?nom-mort " possède plus d'argent que " ?nom crlf)
 
 )
@@ -714,6 +742,8 @@
 	(?*vehicule-location-tod* clear)
 	(?used-vehicule clear)
 ) 
+
+;suspect probabble selon arme et location
 
 ;Eliminer les lieux qui ne peuvent etre visiter
 
