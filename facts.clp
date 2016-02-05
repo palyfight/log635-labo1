@@ -27,7 +27,7 @@
 ;Faire les relations entre les professions et leur revenu
 (deffacts lien-revenu-profession
 	(profession Stripper est dans la classe moyenne)
-	(profession Flight attendant est dans la classe moyenne)
+	(profession Flight-attendant est dans la classe moyenne)
 	(profession Bartender est dans la classe depourvu)
 	(profession Pilot est dans la classe riche)
 	(profession Librarian est dans la classe depourvu)
@@ -249,32 +249,7 @@
 	(niveau habilite expert a une probabilite 75 detre meurtrier)	
 )
 
-(deffacts test
-	(lelelel est mort)
-	(le cadavre a des fractures)
-	(le cadavre se trouve au lieu parc)
-	(le cadavre a une couleur pale)
-	(le cadavre a une rigidite mole)
-	(le cadavre a une temperature 18)
-	(le cadavre a une relation amicale avec lulu)
-	(le climat de la scene est snowy)
-	(la personne lulu est profession Homeless)
-	(la personne lola est profession Clerk)
-	(la personne lili est profession Judge)
-	(la personne lala est profession Scientist)
-	(La personne Philippe est une personne bon)
-	(La personne Philippe a deja commis un crime)
-	(le cadavre a une relation hostile avec Philippe)
-	(le mort lelelel etait profession Lawyer)
-	(il y a indice copeaux-de-bois sur la scene du crime)
-	(La personne Philippe possede dans son compte de banque entre 10001 et 25000)
-	(La personne lelelel possedait dans son compte avant de mourir 50000 )
-	(Le cadavre a ete trouve a 16 h)
-	(La personne Philippe a été vu a 13 h)
-	(La personne lulu a été vu a 0 h)
-	(La personne Bob a été vu a 23 h)
-	(La police affirme que l'éclat sur les lieux du crime est petit)
-)
+(batch "/Users/marcelinphilippe/Documents/Code/Log635/lab1-log635/s1.clp")
 
 ;;;;;;;;;;;;;
 ; Transport ;
@@ -563,16 +538,19 @@
 	(La personne ?nom-mort possedait dans son compte avant de mourir ?montant)
 	=>
 	(if(> ?montant ?max) then
+		(bind ?valeur "plus")
 		(bind ?moins-riche true)
 	)
 	(if(< ?montant ?max) then
+		(bind ?valeur "moins")
 		(bind ?moins-riche false)
 	)
 	(if(= ?montant ?max) then
+		(bind ?valeur "moins")
 		(bind ?moins-riche false)
 	)
 	(assert (possede-moins-argent ?moins-riche ?nom))
-	(printout t ?nom-mort " possède plus d'argent que " ?nom crlf)
+	(printout t ?nom-mort " possède " ?valeur " d'argent que " ?nom crlf)
 
 )
 
