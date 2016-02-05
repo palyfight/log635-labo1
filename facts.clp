@@ -19,6 +19,13 @@
 (deftemplate velocite-vehicule-climat (slot vehicule) (slot velocite))
 (deftemplate location-escape-possible (slot location) (slot vehicule))
 (deftemplate personne-niveau-criminalite (slot nom) (slot niveau))
+(deftemplate personne-niveau-criminalite-name (slot nom) (slot niveau))
+
+(deftemplate suspect-fastest-vehicule (slot name) (slot vehicule))
+(deftemplate suspect-location-visite (slot name) (slot location) (slot index))
+(deftemplate suspect-arme-location-pick-up (slot name) (slot location))
+(deftemplate is-a-criminel (slot name))
+(deftemplate heuristique-mental-criminalite-name (slot heuristique) (slot name))
 
 ;;;;;;;;;;;;;;
 ; Profession ;
@@ -262,6 +269,7 @@
 	(la personne lola est profession Clerk)
 	(la personne lili est profession Judge)
 	(la personne lala est profession Scientist)
+	(la personne Philippe est profession Pilot)
 	(La personne Philippe est une personne bon)
 	(La personne Philippe a deja commis un crime)
 	(le cadavre a une relation hostile avec Philippe)
@@ -274,6 +282,7 @@
 	(La personne lulu a été vu a 0 h)
 	(La personne Bob a été vu a 23 h)
 	(La police affirme que l'éclat sur les lieux du crime est petit)
+	(la personne Philippe est au lieu stripclub)
 )
 
 ;;;;;;;;;;;;;
@@ -303,12 +312,12 @@
 (assert(moyen-transport (Classe depourvu) (vehicule velo marche)))
 
 ;Faire le lien entre les vehicule et les travelling-routes
-(assert   (access-route (vehicule avion) (chemin 13 66 95)))
-(assert   (access-route (vehicule helicoptere) (chemin 13 66 95)))
-(assert   (access-route (vehicule bus) (chemin 720 66 95)))
+(assert   (access-route (vehicule avion) (chemin 13 720 66 15 90 95 110)))
+(assert   (access-route (vehicule helicoptere) (chemin 13 720 66 15 90 95 110)))
+(assert   (access-route (vehicule bus) (chemin 13 720 66 15 90 95 110)))
 (assert   (access-route (vehicule voiture) (chemin 13 720 66 15 90 95 110)))
-(assert   (access-route (vehicule moto) (chemin 13 15 90 110)))
-(assert   (access-route (vehicule train) (chemin 13 15 110 66 720)))
+(assert   (access-route (vehicule moto) (chemin 13 720 66 15 90 95 110)))
+(assert   (access-route (vehicule train) (chemin 13 720 66 15 90 95 110)))
 (assert   (access-route (vehicule velo) (chemin 13 720 66 15 90 95 110)))
 (assert   (access-route (vehicule marche) (chemin 13 720 66 15 90 95 110)))
 (assert   (access-route (vehicule hoverboard) (chemin 13 720 66 15 90 95 110)))
@@ -375,6 +384,12 @@
 	(vehicule-route-temps (vehicule ?vehicule) (route ?route) (temps ?temps))
 )
 
+(defquery search-by-vehicule-route-temps-name
+	(declare (variables ?vehicule ?route))
+	(vehicule-route-temps (vehicule ?vehicule) (route ?route) (temps ?temps))
+)
+
+
 (defquery search-by-name
 	(declare (variables ?probabilite))
 	(expertise-arme (expertise ?probabilite) (arme ?arme) (nom ?nom))
@@ -400,6 +415,30 @@
 	(travelling-routes (name ?name) (starts ?starts) (destination ?destination))
 )
 
+(defquery search-by-destination-location
+	(declare (variables ?destination))
+	(travelling-routes (name ?name) (starts ?starts) (destination ?destination))
+)
+
+(defquery search-by-fastest-vehicule-person-name
+	(declare (variables ?name))
+	(suspect-fastest-vehicule (name ?name) (vehicule ?vehicule))
+)
+
+(defquery search-by-location-suspect-visited
+	(declare (variables ?location))
+	(suspect-location-visite (name ?name) (location ?location) (index ?index))
+)
+
+(defquery search-by-location-suspect-visited-name
+	(declare (variables ?name))
+	(suspect-location-visite (name ?name) (location ?location) (index ?index))
+)
+
+(defquery search-is-criminal-name 
+	(declare (variables ?name))
+	(is-a-criminel (name ?name))
+)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;; Regles simples	   ;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -412,7 +451,7 @@
 	(La personne ?nom a deja commis un crime)
 	=>
 	(printout t ?nom " a deja commis un crime il est donc un suspect" crlf)
-	(assert (is-a-criminel ?nom))
+	(assert (is-a-criminel (name ?nom)))
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -500,7 +539,7 @@
 
 (defrule niveau-criminel
 	(declare (salience 99))
-	(is-a-criminel ?nom)
+	(is-a-criminel (name ?nom))
 	(possede-moins-argent ?moins-riche ?nom)
 	=>
 	(assert (personne-niveau-criminalite (nom ?nom) (niveau 10)) )
@@ -518,20 +557,22 @@
 )
 
 (defrule niveau-suspect-niveau-criminel
-	(declare (salience 95))
+	(declare (salience 95) (no-loop TRUE))
 	(niveau-suspect ?nom ?lvl)
 	?suspect <- (personne-niveau-criminalite (nom ?nom-suspect) (niveau ?niveau))
 	(test (eq ?nom ?nom-suspect))
 	=>
 	(if (eq ?lvl faible) then
-		(modify ?suspect (niveau 20))
+		(assert (personne-niveau-criminalite-name (nom ?nom) (niveau 20)) )
 	)
 	(if (eq ?lvl neutre) then
-		(modify ?suspect (niveau 50))
+		(assert (personne-niveau-criminalite-name (nom ?nom) (niveau 50)) )
 	)
 	(if (eq ?lvl eleve) then
-		(modify ?suspect (niveau 75))
+		(assert (personne-niveau-criminalite-name (nom ?nom) (niveau 75)) )
 	)
+
+
 )
 
 ;Niveau d'etat mental (bon, moyen, derange, sequel)
@@ -646,7 +687,7 @@
 	    )
 	)
 	(printout t "Le vehicule le plus rapide pour " ?personne " est " ?fastest-vehicule crlf)
-	(assert (suspect-fastest-vehicule name ?personne vehicule ?fastest-vehicule))
+	(assert (suspect-fastest-vehicule (name ?personne) (vehicule ?fastest-vehicule)))
 )
 
 ;Probabilite d'etre le suspect en fonction du niveau d'expertise avec l'arme du crime
@@ -706,7 +747,7 @@
 
 ;Trouver le lieu ou le suspect aurait pu s'echapper
 (defrule find-escape-locations
-	(declare (salience 30))
+	(declare (salience 40))
 	(le cadavre se trouve au lieu ?location) 
 	(delta-timedeath ?time)
 	?nb-vehicule <- (accumulate (bind ?count 0)
@@ -743,15 +784,78 @@
 	(?used-vehicule clear)
 ) 
 
-;suspect probabble selon arme et location
+;backtrack un suspect, lieu possible qui a visite
+(defrule bactrack-suspect-location 
+	(declare (salience 39))
+	(la personne ?suspect est au lieu ?location)
+	(delta-timedeath ?time)
+	=>
+	(bind ?temps-tod ?time)
+	(bind ?query-fastest-vehicule (run-query* search-by-fastest-vehicule-person-name ?suspect))
+	(if (?query-fastest-vehicule next) then
+		(bind ?vehicule (?query-fastest-vehicule get vehicule))
+		(while(> ?temps-tod 0)
+			(bind ?query-get-location (run-query* search-by-destination-location ?location))
+			(if (?query-get-location next) then
+				(bind ?chemin (?query-get-location get name))
+				(bind ?query-time (run-query* search-by-vehicule-route-temps-name ?vehicule ?chemin))
+				(if (?query-time next) then
+					(bind ?temps-de-deplacement (?query-time get temps))
+					(if (> (- ?temps-tod ?temps-de-deplacement) 0) then
+						(printout t "Le suspect " ?suspect " aurait pu visite le lieu " ?location crlf)
+						(assert (suspect-location-visite (name ?suspect) (location ?location) (index ?temps-tod)))
+					)
+					(bind ?temps-tod (- ?temps-tod ?temps-de-deplacement))
+				)
+				(bind ?location (?query-get-location get starts))
+			)
+		)
+	)
+)
 
-;Eliminer les lieux qui ne peuvent etre visiter
+;determiner ou qu'un suspect aurait pu ramasser sont arme
+(defrule pick-up-location 
+	(declare (salience 38))
+	(le cadavre se trouve au lieu ?lieu)
+	=>
+	(bind ?query-location (run-query* search-by-location-suspect-visited ?lieu))
+	(while (?query-location next)
+		(bind ?index (?query-location get index))
+		(bind ?name (?query-location get name))
+		(bind ?query-name (run-query* search-by-location-suspect-visited-name ?name))
+		(while (?query-name next)
+			(bind ?suspect-index (?query-name get index))
+			(bind ?location (?query-name get location))
+			(if (<= ?suspect-index ?index) then
+				(assert (suspect-arme-location-pick-up (name ?name) (location ?location)))
+				(printout t "Le suspect " ?name " aurait pu ramasser sont arme au lieu " ?location crlf)
+			)
+		)
+	)
+)
 
-;Eliminer les chemins qui sont en construction (mettre le temps de travel a l'infini)
+;calculer heuristique mental et niveau criminalite
+(defrule heuristique-mental-criminalite
+	(declare (salience 3))
+	(mental-level (name ?name) (level ?mental-level))
+	(personne-niveau-criminalite-name (nom ?nom) (niveau ?level))
+	(test (eq ?name ?nom))
+	=>
+	(assert (heuristique-mental-criminalite-name (heuristique (* ?mental-level ?level)) (name ?name)))
+)
 
-;Lieux possible  ou le suspect aurait pu s'enfuir dans un delai de temps <= temps de decouverte du cadavre - temps de deces
-
-;Relations entre personnages
+;calculer heuristique is-a-criminel
+(defrule heuristique-is-a-criminel 
+	(declare (salience 2))
+	(heuristique-mental-criminalite-name (heuristique ?h) (name ?name))
+	=>
+	(bind ?multiplier 1)
+	(bind ?query-is-a-criminel (run-query* search-is-criminal-name  ?name))
+	(if (?query-is-a-criminel next) then
+		(bind ?multiplier 1000)
+	)
+	(assert (heuristique-is-a-criminel ?name (* ?h ?multiplier)))
+)
 
 
 (run)
