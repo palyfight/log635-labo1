@@ -2,6 +2,7 @@
 
 (defglobal ?*myHash* = (new java.util.Hashtable))
 (defglobal ?*myList* = (new java.util.ArrayList))
+(defglobal ?*vehicule-location-tod* = (new java.util.Hashtable))
 
 (deftemplate moyen-transport (slot Classe)(multislot vehicule))
 (deftemplate type-blessure (multislot marque))
@@ -16,6 +17,7 @@
 (deftemplate expertise-arme (slot expertise) (slot arme) (slot nom))
 (deftemplate mental-level (slot name) (slot level))
 (deftemplate velocite-vehicule-climat (slot vehicule) (slot velocite))
+(deftemplate location-escape-possible (slot location) (slot vehicule))
 
 ;;;;;;;;;;;;;;
 ; Profession ;
@@ -48,6 +50,16 @@
 	(Etat mental est moyen la personne est au niveau 3 etre suspect)
 	(Etat mental est derange la personne est au niveau 7 etre suspect)
 	(Etat mental est sequel la personne est au niveau 10 etre suspect)
+)
+
+;;;;;;;;;;;;;;;;;
+;  	  Eclat     ;
+;;;;;;;;;;;;;;;;;
+(deffacts eclat-lieu-crime
+	(Eclat retrouve sur les lieux du crime couvre un petit trajet)
+	(Eclat retrouve sur les lieux du crime couvre un moyen trajet)
+	(Eclat retrouve sur les lieux du crime couvre un gros trajet)
+	(Eclat retrouve sur les lieux du crime couvre un enorme trajet)
 )
 
 ;;;;;;;;;;;;;;;;;
@@ -162,6 +174,23 @@
 	(indice aucun est fait par arme (list Scie Marteau Couteau))
 )
 
+;Faire la relations entre les armes et les eclats
+(deffacts lien-arme-eclat
+	(Arme Scie fait un gros eclat)
+	(Arme Marteau fait un petit eclat)
+	(Arme Couteau fait un petit eclat)
+	(Arme Pistolet fait un moyen eclat)
+	(Arme Corde fait un petit eclat)
+	(Arme Gaz fait un petit eclat)
+	(Arme Baton-de-baseball fait un moyen eclat)
+	(Arme Voiture fait un enorme eclat)
+	(Arme Moto fait un gros eclat)
+	(Arme Arsenic fait un petit eclat)
+	(Arme Lance fait un moyen eclat)
+	(Arme flamme fait un gros eclat)
+	(Arme Hydrogene-Liquide fait un moyen eclat)
+)
+
 ;Faire la relation entre les armes et les lieux
 (deffacts lien-arme-lieu
 	(lieu hotel contient arme-lieu Poison) 
@@ -233,8 +262,16 @@
 	(la personne lili est profession Judge)
 	(la personne lala est profession Scientist)
 	(La personne Philippe est une personne bon)
+	(La personne Philippe a deja commis un crime)
 	(le mort lelelel etait profession Lawyer)
 	(il y a indice copeaux-de-bois sur la scene du crime)
+	(La personne Philippe possede dans son compte de banque entre 10001 et 25000)
+	(La perssone lelelel possedait dans son compte avant de mourir 50000 )
+	(Le cadavre a ete trouve a 16 h)
+	(La personne Philippe a été vu a 13 h)
+	(La personne lulu a été vu a 0 h)
+	(La personne Bob a été vu a 23 h)
+	(La police affirme que l'éclat sur les lieux du crime est petit)
 )
 
 ;;;;;;;;;;;;;
@@ -356,9 +393,25 @@
 	(profession-suspect-vehicule-climat (vehicule ?vehicule) (profession ?profession) (velocite ?velocite))
 )
 
+(defquery search-by-start-location
+	(declare (variables ?starts))
+	(travelling-routes (name ?name) (starts ?starts) (destination ?destination))
+)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;; Regles simples	   ;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;		  Criminel 		  ;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defrule is-a-criminel
+	(declare (salience 5))
+	(La personne ?nom a deja commis un crime)
+	=>
+	(printout t ?nom " a deja commis un crime il est donc un suspect" crlf)
+	(assert (is-a-criminel ?nom))
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Calculer temps de mort  ;
@@ -367,7 +420,7 @@
 ;le temps que le cadavre a ete trouver 
 ;et le deces en fonction de la couleur du cadavre
 (defrule time-of-death-couleur
-  (declare (salience 5))
+  (declare (salience 99))
   (le cadavre a une couleur ?color)
   (Couleur ?color la personne est mort depuis ?time heure)
   =>
@@ -379,7 +432,7 @@
 ;le temps que le cadavre a ete trouver 
 ;et le deces en fonction de la rigidite du cadavre
 (defrule time-of-death-rigidite
-  (declare (salience 5))
+  (declare (salience 98))
   (le cadavre a une rigidite ?rigidite)
   (Rigiditer ?rigidite la personne est mort depuis ?time heure) 
   =>
@@ -391,7 +444,7 @@
 ;le temps que le cadavre a ete trouver 
 ;et le deces en fonction de la temperature du cadavre
 (defrule time-of-death-temperature
-  (declare (salience 5))
+  (declare (salience 97))
   (le cadavre a une temperature ?temperature) 
   =>
   (bind ?time (round (* (- 36.9 ?temperature) 1.2))) 
@@ -402,7 +455,7 @@
 
 ;Determiner le VRAI temps de deces
 (defrule time-of-death
-  (declare (salience 3))
+  (declare (salience 96))
   (delta-time-color-death ?time-color)
   (delta-time-rigidite-death ?time-rigidite)
   (delta-time-temperature-death ?time-temperature)
@@ -425,6 +478,14 @@
 	(assert (armes-possible ?armes))
 )
 
+(defrule arme-du-crime-selon-eclat-blessure
+	(declare (salience 2))
+	(armes-possible ?arme)
+	(arme-possible-eclat ?arme)
+	=>
+	(printout t ?arme crlf)
+)
+
 ;Lieux possible pour armes du crime
 (defrule location-arme
 	(declare (salience 9))
@@ -442,6 +503,7 @@
 	(relation ?relation a un risque ?niveau)
 	=>
 	(printout t "Les suspect " ?suspect " a une probabilite " ?niveau " d'etre le meurtrier" crlf)
+	(assert (niveau-suspect ?niveau))
 )
 
 ;Niveau d'etat mental (bon, moyen, derange, sequel)
@@ -454,10 +516,42 @@
 	(assert (mental-level (name ?nom) (level ?niveau)))
 )
 
+;Arme possible selon l'eclat
+(defrule arme-selon-eclat
+	(declare (salience 120))
+	(La police affirme que l'éclat sur les lieux du crime est ?grandeur)
+	(Eclat retrouve sur les lieux du crime couvre un ?grandeur trajet)
+	(Arme ?arme fait un ?grandeur eclat)
+	=>
+	(assert (arme-possible-eclat ?arme))
+	(printout t "Selon l'éclat sur les lieu du crime l'arme possible est " ?arme crlf)
+)
+
+; ------- Complex or not?
+;Est Suspect si il possède moins d'argent que le mort
+(defrule montant-disponible
+	(declare (salience 100))
+	(La personne ?nom possede dans son compte de banque entre ?min et ?max)
+	(La perssone ?nom-mort possedait dans son compte avant de mourir ?montant)
+	=>
+	(if(> ?montant ?max) then
+		(bind ?plus-riche true)
+	)
+	(if(< ?montant ?max) then
+		(bind ?plus-riche false)
+	)
+	(if(= ?montant ?max) then
+		(bind ?plus-riche false)
+	)
+	(assert (possede-plus-argent ?plus-riche))
+	(printout t ?nom-mort " possède plus d'argent que " ?nom crlf)
+
+)
+
 ; ------- Complex or not?
 ;Determiner la vitesse des vehicules qui ne sont pas disabled
 (defrule vitesse-vehicule
-	(declare (salience 50))
+	(declare (salience 100))
 	(le climat de la scene est ?climat)
 	(le vehicule ?vehicule a une velocite maximale de ?vitesse)
 	(Le climat ?climat reduit la vitesse de ?facteur)
@@ -469,10 +563,20 @@
 	;(printout t "La vitesse du moyen de transport " ?vehicule " dans le climat " ?climat " est " ?velocite crlf)
 )
 
+;cree de fait temporaire sur le trajet des vehicules
+(defrule temp-vehicule-location-tod
+	(declare (salience 90))
+	(velocite-vehicule-climat (vehicule ?vehicule) (vehicule ?velocite))
+	(delta-timedeath ?tod)
+	(le cadavre se trouve au lieu ?location)
+	=>
+	(?*vehicule-location-tod* put ?vehicule ?tod)
+)
+
 ; ------- Complex or not?
 ;Determiner le temps qu'un vehicule prend parcourir un chemin au complet
 (defrule temps-parcourir-chemin
-	(declare (salience 25))
+	(declare (salience 45))
 	(velocite-vehicule-climat (vehicule ?vehicule) (velocite ?velocite))
 	(access-route (vehicule ?vehicule) (chemin $?chemins))
 	=>
@@ -530,7 +634,6 @@
 	(printout t "Le niveau d'expertise de " ?suspect " avec l'arme " ?armes-crime " est de " ?probabilite crlf)
 )
 
-
 ;Probabilite d'etre le meurtrier en fonction des classes sociales
 (defrule probabilite-meurtrier-classe-sociale
 	(declare (salience 1))
@@ -552,6 +655,65 @@
 	(printout t "La probabilite que " ?suspect " ait tuer " ?mort " a cause de la classe sociale est de " ?probabilite crlf)
 )
 
+;A été vue à l'heure du crime
+(defrule a-ete-vue
+	(declare (salience 5))
+	(La personne ?nom a été vu a ?heure h)
+	(delta-time-temperature-death ?heure-meurtre)
+	=>
+	(if (< 0 (- ?heure ?heure-meurtre)) then
+		(bind ?alibi true)
+		(printout t ?nom " avait pas d'alibi a l'heure du meutre " crlf)
+	)
+	(if (> 0 (- ?heure ?heure-meurtre)) then
+		(bind ?alibi false)
+		(printout t ?nom " n'avait pas d'alibi a l'heure du meutre " crlf)
+	)
+	(if (= 0 (- ?heure ?heure-meurtre)) then
+		(bind ?alibi true)
+		(printout t ?nom " avait un alibi a l'heure du meutre " crlf)
+	)
+	(assert (a-un-alibi ?alibi))
+)
+
+;Trouver le lieu ou le suspect aurait pu s'echapper
+(defrule find-escape-locations
+	(declare (salience 30))
+	(le cadavre se trouve au lieu ?location) 
+	(delta-timedeath ?time)
+	?nb-vehicule <- (accumulate (bind ?count 0)
+								(bind ?count (+ ?count 1))
+								?count
+								(velocite-vehicule-climat (vehicule ?vehicule) (velocite ?velocite)))
+	=>
+	(bind ?used-vehicule (new java.util.ArrayList))
+	(while (> ?nb-vehicule 0)
+		(bind ?query-escape-location (run-query* search-by-start-location ?location))
+		(if (?query-escape-location next) then
+			(bind ?location (?query-escape-location get destination))
+			(bind ?chemin (?query-escape-location get name))			
+			(bind ?query-vehicule (run-query* search-by-vehicule-route-temps ?chemin))
+			(while (?query-vehicule next)
+				(bind ?vehicule (?query-vehicule get vehicule))
+				(bind ?tod (?*vehicule-location-tod* get ?vehicule))
+				(bind ?temps-de-deplacement (?query-vehicule get temps))
+				(if (not (?used-vehicule contains ?vehicule)) then
+					(if (> (- ?tod ?temps-de-deplacement) 0) then
+						(?*vehicule-location-tod* put ?vehicule (- ?tod ?temps-de-deplacement))
+						(assert (location-escape-possible (location ?location) (vehicule ?vehicule)))
+						(printout t "Le lieu " ?location " est un endroit possible ou le suspect a pu s'echaper en " ?vehicule " dans les " ?time " heures" crlf)
+					 else
+					 	(?used-vehicule add ?vehicule)
+					 	(bind ?nb-vehicule (- ?nb-vehicule 1))
+					)
+				)
+				 
+			)
+		)
+	)
+	(?*vehicule-location-tod* clear)
+	(?used-vehicule clear)
+) 
 
 ;Eliminer les lieux qui ne peuvent etre visiter
 
@@ -560,5 +722,6 @@
 ;Lieux possible  ou le suspect aurait pu s'enfuir dans un delai de temps <= temps de decouverte du cadavre - temps de deces
 
 ;Relations entre personnages
+
 
 (run)
