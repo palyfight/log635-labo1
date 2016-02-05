@@ -251,6 +251,7 @@
 
 (batch "/Users/marcelinphilippe/Documents/Code/Log635/lab1-log635/s1.clp")
 
+
 ;;;;;;;;;;;;;
 ; Transport ;
 ;;;;;;;;;;;;;
@@ -401,7 +402,7 @@
   (le cadavre a une couleur ?color)
   (Couleur ?color la personne est mort depuis ?time heure)
   =>
-  (printout t "Selon la couleur du cadavre, la personne est morte " ?time " heure avant la decouverte du cadavre" crlf)
+  (printout t "Selon la COULEUR du cadavre, la personne est morte " ?time " heure avant la decouverte du cadavre" crlf)
   (assert (delta-time-color-death ?time))
 )
 
@@ -413,7 +414,7 @@
   (le cadavre a une rigidite ?rigidite)
   (Rigiditer ?rigidite la personne est mort depuis ?time heure) 
   =>
-  (printout t "Selon la rigidite du cadavre, la personne est morte " ?time " heure avant la decouverte du cadavre" crlf)
+  (printout t "Selon la RIGIDITE du cadavre, la personne est morte " ?time " heure avant la decouverte du cadavre" crlf)
   (assert (delta-time-rigidite-death ?time))
 )
 
@@ -425,7 +426,7 @@
   (le cadavre a une temperature ?temperature) 
   =>
   (bind ?time (round (* (- 36.9 ?temperature) 1.2))) 
-  (printout t "Selon la temperature du cadavre, la personne est morte " ?time " avant la decouverte du cadavre" crlf)
+  (printout t "Selon la TEMPERATURE du cadavre, la personne est morte " ?time " avant la decouverte du cadavre" crlf)
   (assert (delta-time-temperature-death ?time))
 )
 
@@ -442,30 +443,32 @@
   (assert (delta-timedeath ?min-time))
 )
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;; Arme du crime ;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;Arme du crime
 (defrule arme-du-crime
-	(declare (salience 10))
+	(declare (salience 95))
 	(le cadavre a des ?blessures)
 	(blessure ?blessures est fait par type-armes ?armes)
 	(il y a indice ?indice sur la scene du crime)
 	(indice ?indice est fait par arme $?armes2)
 	(test (member$ ?armes ?armes2))
 	=>
-	(printout t "arme du crime possible est " ?armes crlf)
 	(assert (armes-possible ?armes))
 )
 
 (defrule arme-du-crime-selon-eclat-blessure
-	(declare (salience 2))
+	(declare (salience 94))
 	(armes-possible ?arme)
 	(arme-possible-eclat ?arme)
 	=>
-	(printout t ?arme crlf)
+	(printout t "L'arme du crime possible est "?arme crlf)
 )
 
 ;Lieux possible pour armes du crime
 (defrule location-arme
-	(declare (salience 9))
+	(declare (salience 93))
 	(armes-possible ?armes)
 	(lieu ?lieux contient arme-lieu ?armes)
 	=>
@@ -473,27 +476,74 @@
 	(assert (lieu-arme-suspect ?lieux))
 )
 
+;Arme possible selon l'eclat
+(defrule arme-selon-eclat
+	(declare (salience 88))
+	(La police affirme que l'éclat sur les lieux du crime est ?grandeur)
+	(Eclat retrouve sur les lieux du crime couvre un ?grandeur trajet)
+	(Arme ?arme fait un ?grandeur eclat)
+	=>
+	(assert (arme-possible-eclat ?arme))
+	(printout t "Selon l'eclat sur les lieux du crime l'arme possible est " ?arme crlf)
+)
+
+;Probabilite d'etre le suspect en fonction du niveau d'expertise avec l'arme du crime
+(defrule niveau-expertise-arme
+	(declare (salience 81))
+	(armes-possible ?armes-crime)
+	(la personne ?suspect est profession ?profession)
+	(niveau-habilete (profession $?liste-profession) (arme ?armes-crime) (niveau ?niveau))
+	(niveau habilite ?niveau a une probabilite ?probabilite detre meurtrier)
+	(test (member$ ?profession $?liste-profession))
+	=>
+	(assert (expertise-arme (expertise ?probabilite) (arme ?armes-crime) (nom ?suspect)))
+	(printout t "Le niveau d'expertise de " ?suspect " avec l'arme " ?armes-crime " est de " ?probabilite crlf)
+)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;; Raisons meurtre ;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;Est Suspect si il possède moins d'argent que le mort
+(defrule mort-est-plus-riche
+	(declare (salience 93))
+	(La personne ?nom possede dans son compte de banque entre ?min et ?max)
+	(La personne ?nom-mort possedait dans son compte avant de mourir ?montant)
+	=>
+	(if(> ?montant ?max) then
+		(bind ?moins-riche true)
+	)
+	(if(< ?montant ?max) then
+		(bind ?moins-riche false)
+	)
+	(if(= ?montant ?max) then
+		(bind ?moins-riche false)
+	)
+	(assert (possede-moins-argent ?moins-riche ?nom))
+	(printout t ?nom-mort " possede plus d'argent que " ?nom crlf)
+
+)
+
 (defrule niveau-criminel
-	(declare (salience 99))
+	(declare (salience 92))
 	(is-a-criminel ?nom)
 	(possede-moins-argent ?moins-riche ?nom)
 	=>
 	(assert (personne-niveau-criminalite (nom ?nom) (niveau 10)) )
-	(printout t ?nom " à un niveau de criminalite de " 10 crlf)
+	(printout t ?nom " a un niveau de criminalite de " 10 crlf)
 )
 
 ;Niveau de suspects (low, med, high)
 (defrule niveau-suspect
-	(declare (salience 3))
+	(declare (salience 91))
 	(le cadavre a une relation ?relation avec ?suspect)
 	(relation ?relation a un risque ?niveau)
 	=>
-	(printout t "Les suspect " ?suspect " a une probabilite " ?niveau " d'etre le meurtrier" crlf)
+	(printout t "Le suspect " ?suspect " a une probabilite " ?niveau " d'etre le meurtrier" crlf)
 	(assert (niveau-suspect ?suspect ?niveau))
 )
 
 (defrule niveau-suspect-niveau-criminel
-	(declare (salience 95))
+	(declare (salience 90))
 	(niveau-suspect ?nom ?lvl)
 	?suspect <- (personne-niveau-criminalite (nom ?nom-suspect) (niveau ?niveau))
 	(test (eq ?nom ?nom-suspect))
@@ -511,7 +561,7 @@
 
 ;Niveau d'etat mental (bon, moyen, derange, sequel)
 (defrule etat-mental
-	(declare (salience 10))
+	(declare (salience 89))
 	(La personne ?nom est une personne ?etat)
 	(Etat mental est ?etat la personne est au niveau ?niveau etre suspect)
 	=>
@@ -519,130 +569,9 @@
 	(assert (mental-level (name ?nom) (level ?niveau)))
 )
 
-;Arme possible selon l'eclat
-(defrule arme-selon-eclat
-	(declare (salience 120))
-	(La police affirme que l'éclat sur les lieux du crime est ?grandeur)
-	(Eclat retrouve sur les lieux du crime couvre un ?grandeur trajet)
-	(Arme ?arme fait un ?grandeur eclat)
-	=>
-	(assert (arme-possible-eclat ?arme))
-	(printout t "Selon l'éclat sur les lieu du crime l'arme possible est " ?arme crlf)
-)
-
-; ------- Complex or not?
-;Est Suspect si il possède moins d'argent que le mort
-(defrule mort-est-plus-riche
-	(declare (salience 100))
-	(La personne ?nom possede dans son compte de banque entre ?min et ?max)
-	(La personne ?nom-mort possedait dans son compte avant de mourir ?montant)
-	=>
-	(if(> ?montant ?max) then
-		(bind ?valeur "plus")
-		(bind ?moins-riche true)
-	)
-	(if(< ?montant ?max) then
-		(bind ?valeur "moins")
-		(bind ?moins-riche false)
-	)
-	(if(= ?montant ?max) then
-		(bind ?valeur "moins")
-		(bind ?moins-riche false)
-	)
-	(assert (possede-moins-argent ?moins-riche ?nom))
-	(printout t ?nom-mort " possède " ?valeur " d'argent que " ?nom crlf)
-
-)
-
-; ------- Complex or not?
-;Determiner la vitesse des vehicules qui ne sont pas disabled
-(defrule vitesse-vehicule
-	(declare (salience 100))
-	(le climat de la scene est ?climat)
-	(le vehicule ?vehicule a une velocite maximale de ?vitesse)
-	(Le climat ?climat reduit la vitesse de ?facteur)
-	(Le climat ?climat desactive-vehicule $?list-desactive-vehicule)
-	(test (not (member$ ?vehicule $?list-desactive-vehicule)))
-	=>
-	(bind ?velocite (* ?facteur ?vitesse))
-	(assert (velocite-vehicule-climat (vehicule ?vehicule) (velocite ?velocite)))
-	;(printout t "La vitesse du moyen de transport " ?vehicule " dans le climat " ?climat " est " ?velocite crlf)
-)
-
-;cree de fait temporaire sur le trajet des vehicules
-(defrule temp-vehicule-location-tod
-	(declare (salience 90))
-	(velocite-vehicule-climat (vehicule ?vehicule) (vehicule ?velocite))
-	(delta-timedeath ?tod)
-	(le cadavre se trouve au lieu ?location)
-	=>
-	(?*vehicule-location-tod* put ?vehicule ?tod)
-)
-
-; ------- Complex or not?
-;Determiner le temps qu'un vehicule prend parcourir un chemin au complet
-(defrule temps-parcourir-chemin
-	(declare (salience 45))
-	(velocite-vehicule-climat (vehicule ?vehicule) (velocite ?velocite))
-	(access-route (vehicule ?vehicule) (chemin $?chemins))
-	=>
-	(foreach ?chemin ?chemins
-		(bind ?query-chemin (run-query* search-by-route-name ?chemin))
-		(?query-chemin next)
-		(bind ?distance (?query-chemin getInt km))
-		(bind ?temps-deplacement (round (/ ?distance ?velocite)))
-		(assert (vehicule-route-temps (vehicule ?vehicule) (route ?chemin) (temps ?temps-deplacement)))
-	)
-)
-
-; ------- Complex or not?
-;Deteminer les professions qui ont access au vehicule (a partir de la liste filtrer dans velocite-vehicule)
-(defrule profession-vehicule 
-	(declare (salience 49))
-	(profession ?profession est dans la classe ?classe)
-	(moyen-transport (Classe ?classe) (vehicule $?vehicules))
-	(velocite-vehicule-climat (vehicule ?vehicule) (velocite ?velocite))
-	(test (member$ ?vehicule $?vehicules)) 
-	=>
-	(assert(profession-suspect-vehicule-climat (vehicule ?vehicule) (profession ?profession) (velocite ?velocite)))
-)
-
-;Determiner le vehicule le plus rapide qu'un personnage peut utiliser
-(defrule vehicule-plus-rapide
-	(declare (salience 48))
-	(la personne ?personne est profession ?profession)
-	=>
-	(bind ?result (run-query* get-profession-vehicule-climat ?profession))
-	(bind ?max 0)
-	(bind ?fastest-vehicule marche)
-	(while (?result next) do
-	    (bind ?velocite (?result get velocite))
-	   	(bind ?vehicule (?result get vehicule))
-	    (if (> ?velocite ?max) then 
-	    	(bind ?fastest-vehicule ?vehicule)
-	    	(bind ?max ?velocite)
-	    )
-	)
-	(printout t "Le vehicule le plus rapide pour " ?personne " est " ?fastest-vehicule crlf)
-	(assert (suspect-fastest-vehicule name ?personne vehicule ?fastest-vehicule))
-)
-
-;Probabilite d'etre le suspect en fonction du niveau d'expertise avec l'arme du crime
-(defrule niveau-expertise-arme
-	(declare (salience 1))
-	(armes-possible ?armes-crime)
-	(la personne ?suspect est profession ?profession)
-	(niveau-habilete (profession $?liste-profession) (arme ?armes-crime) (niveau ?niveau))
-	(niveau habilite ?niveau a une probabilite ?probabilite detre meurtrier)
-	(test (member$ ?profession $?liste-profession))
-	=>
-	(assert (expertise-arme (expertise ?probabilite) (arme ?armes-crime) (nom ?suspect)))
-	(printout t "Le niveau d'expertise de " ?suspect " avec l'arme " ?armes-crime " est de " ?probabilite crlf)
-)
-
 ;Probabilite d'etre le meurtrier en fonction des classes sociales
 (defrule probabilite-meurtrier-classe-sociale
-	(declare (salience 1))
+	(declare (salience 80))
 	(la personne ?suspect est profession ?profession-suspect)
 	(profession ?profession-suspect est dans la classe ?classe-suspect)
 	(le mort ?mort etait profession ?profession-mort)
@@ -657,15 +586,87 @@
 	(if(< 0 (str-compare ?classe-suspect ?classe-mort)) then
 		(bind ?probabilite 25)
 	)
-	(assert (probabilite-classe-social ?probabilite))
+	(assert (probabilite-classe-social ?suspect ?probabilite))
 	(printout t "La probabilite que " ?suspect " ait tuer " ?mort " a cause de la classe sociale est de " ?probabilite crlf)
+)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; Vehicules et routes ;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;Determiner la vitesse des vehicules qui ne sont pas disabled
+(defrule vitesse-vehicule
+	(declare (salience 86))
+	(le climat de la scene est ?climat)
+	(le vehicule ?vehicule a une velocite maximale de ?vitesse)
+	(Le climat ?climat reduit la vitesse de ?facteur)
+	(Le climat ?climat desactive-vehicule $?list-desactive-vehicule)
+	(test (not (member$ ?vehicule $?list-desactive-vehicule)))
+	=>
+	(bind ?velocite (* ?facteur ?vitesse))
+	(assert (velocite-vehicule-climat (vehicule ?vehicule) (velocite ?velocite)))
+)
+
+;cree de fait temporaire sur le trajet des vehicules
+(defrule temp-vehicule-location-tod
+	(declare (salience 85))
+	(velocite-vehicule-climat (vehicule ?vehicule) (vehicule ?velocite))
+	(delta-timedeath ?tod)
+	(le cadavre se trouve au lieu ?location)
+	=>
+	(?*vehicule-location-tod* put ?vehicule ?tod)
+)
+
+;Determiner le temps qu'un vehicule prend parcourir un chemin au complet
+(defrule temps-parcourir-chemin
+	(declare (salience 84))
+	(velocite-vehicule-climat (vehicule ?vehicule) (velocite ?velocite))
+	(access-route (vehicule ?vehicule) (chemin $?chemins))
+	=>
+	(foreach ?chemin ?chemins
+		(bind ?query-chemin (run-query* search-by-route-name ?chemin))
+		(?query-chemin next)
+		(bind ?distance (?query-chemin getInt km))
+		(bind ?temps-deplacement (round (/ ?distance ?velocite)))
+		(assert (vehicule-route-temps (vehicule ?vehicule) (route ?chemin) (temps ?temps-deplacement)))
+	)
+)
+
+;Deteminer les professions qui ont access au vehicule (a partir de la liste filtrer dans velocite-vehicule)
+(defrule profession-vehicule 
+	(declare (salience 83))
+	(profession ?profession est dans la classe ?classe)
+	(moyen-transport (Classe ?classe) (vehicule $?vehicules))
+	(velocite-vehicule-climat (vehicule ?vehicule) (velocite ?velocite))
+	(test (member$ ?vehicule $?vehicules)) 
+	=>
+	(assert(profession-suspect-vehicule-climat (vehicule ?vehicule) (profession ?profession) (velocite ?velocite)))
+)
+
+;Determiner le vehicule le plus rapide qu'un personnage peut utiliser
+(defrule vehicule-plus-rapide
+	(declare (salience 82))
+	(la personne ?personne est profession ?profession)
+	=>
+	(bind ?result (run-query* get-profession-vehicule-climat ?profession))
+	(bind ?max 0)
+	(bind ?fastest-vehicule marche)
+	(while (?result next) do
+	    (bind ?velocite (?result get velocite))
+	   	(bind ?vehicule (?result get vehicule))
+	    (if (> ?velocite ?max) then 
+	    	(bind ?fastest-vehicule ?vehicule)
+	    	(bind ?max ?velocite)
+	    )
+	)
+	(printout t "Le vehicule le plus rapide pour " ?personne " est " ?fastest-vehicule crlf)
+	(assert (suspect-fastest-vehicule ?personne ?fastest-vehicule))
 )
 
 ;A été vue à l'heure du crime
 (defrule a-ete-vue
-	(declare (salience 5))
+	(declare (salience 79))
 	(La personne ?nom a été vu a ?heure h)
-	(delta-time-temperature-death ?heure-meurtre)
+	(delta-timedeath ?heure-meurtre)
 	=>
 	(if (< 0 (- ?heure ?heure-meurtre)) then
 		(bind ?alibi true)
@@ -679,12 +680,12 @@
 		(bind ?alibi true)
 		(printout t ?nom " avait un alibi a l'heure du meutre " crlf)
 	)
-	(assert (a-un-alibi ?alibi))
+	(assert (a-un-alibi ?nom ?alibi))
 )
 
 ;Trouver le lieu ou le suspect aurait pu s'echapper
 (defrule find-escape-locations
-	(declare (salience 30))
+	(declare (salience 78))
 	(le cadavre se trouve au lieu ?location) 
 	(delta-timedeath ?time)
 	?nb-vehicule <- (accumulate (bind ?count 0)
@@ -721,15 +722,36 @@
 	(?used-vehicule clear)
 ) 
 
-;suspect probabble selon arme et location
 
-;Eliminer les lieux qui ne peuvent etre visiter
 
-;Eliminer les chemins qui sont en construction (mettre le temps de travel a l'infini)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;; REGLE FINALE ;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defrule find-suspect-proche-crime
+	(declare (salience 2))	
+	(la personne ?personne est au lieu ?lieu)
+	(suspect-fastest-vehicule ?personne ?fastest-vehicule)
+	(location-escape-possible (location ?lieu) (vehicule ?fastest-vehicule))
+	=>
+	(assert (suspect-proche-crime ?personne ?fastest-vehicule))
+	;(printout t "Le coupable " ?personne " est au lieu " ?lieu " et son vehicule le plus rapide est " ?fastest-vehicule crlf)
+)
 
-;Lieux possible  ou le suspect aurait pu s'enfuir dans un delai de temps <= temps de decouverte du cadavre - temps de deces
+(defrule find-suspect-alibi-classe
+	(declare (salience 2))
+	(la personne ?personne est au lieu ?lieu)
+	(a-un-alibi ?personne ?alibi)
+	(probabilite-classe-social ?personne ?probabilite)
+	=>
+	(bind ?alibi-value 0)
+	(if(eq ?alibi true)then
+		(bind ?alibi-value 0)
+	 else
+	 	(bind ?alibi-value 10)
+	)
+	(assert (suspect-alibi-classe ?personne ?probabilite ?alibi-value))
+	;(printout t ?personne "ALIBI " ?alibi-value " PROBABILITE " ?probabilite crlf)
 
-;Relations entre personnages
-
+)
 
 (run)
