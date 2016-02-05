@@ -283,7 +283,7 @@
 
 ;Faire les relations entre les transport et revenu
 (assert(moyen-transport (Classe riche) (vehicule avion bus voiture moto helicoptere velo marche hoverboard train)))
-(assert(moyen-transport (Classe moyennes) (vehicule bus voiture moto velo marche hoverboard train)))
+(assert(moyen-transport (Classe moyenne) (vehicule bus voiture moto velo marche hoverboard train)))
 (assert(moyen-transport (Classe depourvu) (vehicule velo marche)))
 
 ;Faire le lien entre les vehicule et les travelling-routes
@@ -493,13 +493,14 @@
 	(indice ?indice est fait par arme $?armes2)
 	(test (member$ ?armes ?armes2))
 	=>
+	(printout t "L'arme du crime possible est FUCK YOU "?arme crlf)
 	(assert (armes-possible ?armes))
 )
 
 (defrule arme-du-crime-selon-eclat-blessure
-	(declare (salience 94))
+	(declare (salience 85))
 	(armes-possible ?arme)
-	(arme-possible-eclat ?arme)
+	;(arme-possible-eclat ?arme)
 	=>
 	(printout t "L'arme du crime possible est "?arme crlf)
 )
@@ -522,7 +523,7 @@
 	(Arme ?arme fait un ?grandeur eclat)
 	=>
 	(assert (arme-possible-eclat ?arme))
-	(printout t "Selon l'eclat sur les lieux du crime l'arme possible est " ?arme crlf)
+	;(printout t "Selon l'eclat sur les lieux du crime l'arme possible est " ?arme crlf)
 )
 
 ;Probabilite d'etre le suspect en fonction du niveau d'expertise avec l'arme du crime
@@ -724,8 +725,8 @@
 	(delta-timedeath ?heure-meurtre)
 	=>
 	(if (< 0 (- ?heure ?heure-meurtre)) then
-		(bind ?alibi true)
-		(printout t ?nom " avait pas d'alibi a l'heure du meutre " crlf)
+		(bind ?alibi false)
+		(printout t ?nom " n'avait pas d'alibi a l'heure du meutre " crlf)
 	)
 	(if (> 0 (- ?heure ?heure-meurtre)) then
 		(bind ?alibi false)
@@ -886,11 +887,12 @@
 (defrule trouver-coupable
 	(declare (salience 1))
 	(suspect-proche-crime ?personne)
-	;(suspect-alibi-classe ?personne ?prob-alibi)
-	;(heuristique-is-a-criminel ?personne ?heuristique)
-
+	(suspect-alibi-classe ?personne ?prob-alibi)
+	(heuristique-is-a-criminel ?personne ?heuristique)
+	(suspect-arme-location-pick-up (name ?personne) (location ?location))
 	=>
-	(printout t "DAS ALIBI " ?personne crlf)
+	(bind ?real-heuristique (* ?prob-alibi ?heuristique))
+	(printout t "Le coupable est:  " ?personne crlf)
 )
 
 (run)

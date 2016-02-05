@@ -41,7 +41,7 @@
 	(la personne Jean-Guy est profession Pilot)
 	(La personne Jean-Guy a deja commis un crime)
 	(La personne Jean-Guy est une personne sequel)
-	(la personne Jean-Guy est au lieu courthouse)
+	(la personne Jean-Guy est au lieu stripclub)
 	(La personne Jean-Guy possede dans son compte de banque entre 200000 et 500000)
 	(La personne Jean-Guy a été vu a 22 h)
 )
