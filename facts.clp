@@ -257,7 +257,7 @@
 )
 
 
-(batch "C:/Users/AJ94350/Desktop/log635-labo1/s1.clp")
+(batch "C:/Users/cbamatembera/Documents/ETS/H16/LOG635/log635-labo1/s1.clp")
 
 
 ;;;;;;;;;;;;;
@@ -493,14 +493,13 @@
 	(indice ?indice est fait par arme $?armes2)
 	(test (member$ ?armes ?armes2))
 	=>
-	(printout t "L'arme du crime possible est FUCK YOU "?arme crlf)
 	(assert (armes-possible ?armes))
 )
 
 (defrule arme-du-crime-selon-eclat-blessure
 	(declare (salience 85))
 	(armes-possible ?arme)
-	;(arme-possible-eclat ?arme)
+	(arme-possible-eclat ?arme)
 	=>
 	(printout t "L'arme du crime possible est "?arme crlf)
 )
@@ -523,7 +522,7 @@
 	(Arme ?arme fait un ?grandeur eclat)
 	=>
 	(assert (arme-possible-eclat ?arme))
-	;(printout t "Selon l'eclat sur les lieux du crime l'arme possible est " ?arme crlf)
+	(printout t "Selon l'eclat sur les lieux du crime l'arme possible est " ?arme crlf)
 )
 
 ;Probabilite d'etre le suspect en fonction du niveau d'expertise avec l'arme du crime
@@ -536,7 +535,6 @@
 	(test (member$ ?profession $?liste-profession))
 	=>
 	(assert (expertise-arme (expertise ?probabilite) (arme ?armes-crime) (nom ?suspect)))
-	(printout t "Le niveau d'expertise de " ?suspect " avec l'arme " ?armes-crime " est de " ?probabilite crlf)
 )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -703,21 +701,6 @@
 	(assert (suspect-fastest-vehicule (name ?personne) (vehicule ?fastest-vehicule)))
 )
 
-;Probabilite d'etre le suspect en fonction du niveau d'expertise avec l'arme du crime
-(defrule niveau-expertise-arme
-	(declare (salience 1))
-	(armes-possible ?armes-crime)
-	(la personne ?suspect est profession ?profession)
-	(niveau-habilete (profession $?liste-profession) (arme ?armes-crime) (niveau ?niveau))
-	(niveau habilite ?niveau a une probabilite ?probabilite detre meurtrier)
-	(test (member$ ?profession $?liste-profession))
-	=>
-	(assert (expertise-arme (expertise ?probabilite) (arme ?armes-crime) (nom ?suspect)))
-	(printout t "Le niveau d'expertise de " ?suspect " avec l'arme " ?armes-crime " est de " ?probabilite crlf)
-)
-
-
-
 ;A été vue à l'heure du crime
 (defrule a-ete-vue
 	(declare (salience 79))
@@ -736,7 +719,6 @@
 		(bind ?alibi true)
 		(printout t ?nom " avait un alibi a l'heure du meutre " crlf)
 	)
-	(printout t "" alibi crlf)
 	(assert (a-un-alibi ?nom ?alibi))
 )
 
@@ -765,7 +747,6 @@
 					(if (> (- ?tod ?temps-de-deplacement) 0) then
 						(?*vehicule-location-tod* put ?vehicule (- ?tod ?temps-de-deplacement))
 						(assert (location-escape-possible (location ?location) (vehicule ?vehicule)))
-						(printout t "Le lieu " ?location " est un endroit possible ou le suspect a pu s'echaper en " ?vehicule " dans les " ?time " heures" crlf)
 					 else
 					 	(?used-vehicule add ?vehicule)
 					 	(bind ?nb-vehicule (- ?nb-vehicule 1))
@@ -880,7 +861,6 @@
 	 	(bind ?alibi-value 10)
 	)
 	(assert (suspect-alibi-classe ?personne (* ?probabilite ?alibi-value)))
-	;(printout t ?personne "ALIBI " ?alibi-value " PROBABILITE " ?probabilite crlf)
 
 )
 

@@ -1,5 +1,5 @@
 (deffacts General
-	(La police affirme que l'éclat sur les lieux du crime est petit)
+	(La police affirme que l'éclat sur les lieux du crime est moyen)
 	(le climat de la scene est snowy)
 	(il y a indice copeaux-de-bois sur la scene du crime)
 )
@@ -8,7 +8,7 @@
 	(Linda est mort)
 	(le mort Linda etait profession Stripper)
 	(le cadavre se trouve au lieu parc)
-	(le cadavre a des fracture)
+	(le cadavre a des fractures)
 	(le cadavre a une couleur pale)
 	(le cadavre a une rigidite maximale)
 	(le cadavre a une temperature 20)
