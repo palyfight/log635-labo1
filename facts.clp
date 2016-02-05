@@ -123,12 +123,12 @@
 ;faire le lien entre le climat et la vitesse
 (deffacts lien-climat-vitesse
 	(Le climat rainy reduit la vitesse de 0.125)
-	(Le climat sunny reduit la vitesse de 0)
-	(Le climat cloudy reduit la vitesse de 0)
+	(Le climat sunny reduit la vitesse de 0.225)
+	(Le climat cloudy reduit la vitesse de 0.125)
 	(Le climat snowy reduit la vitesse de 0.25)
-	(Le climat blizzard reduit la vitesse de 0.5)
-	(Le climat thunderstorm reduit la vitesse de 0.375)
-	(Le climat tsunami reduit la vitesse de 0.625)
+	(Le climat blizzard reduit la vitesse de 0.225)
+	(Le climat thunderstorm reduit la vitesse de 0.225)
+	(Le climat tsunami reduit la vitesse de 0.225)
 )
 
 ;faire le lien entre le climat et les vehicules
@@ -138,6 +138,8 @@
 	(Le climat blizzard desactive-vehicule (list avion bus voiture moto helicoptere velo marche hoverboard))
 	(Le climat thunderstorm desactive-vehicule (list avion helicoptere))
 	(Le climat tsuname desactive-vehicule (list avion bus voiture moto helicoptere velo marche hoverboard train))
+	(Le climat sunny desactive-vehicule (list ))
+	(Le climat cloudy desactive-vehicule (list ))
 )
 
 ;;;;;;;;;
@@ -194,8 +196,7 @@
 	(Arme Voiture fait un enorme eclat)
 	(Arme Moto fait un gros eclat)
 	(Arme Arsenic fait un petit eclat)
-	(Arme Lance fait un moyen eclat)
-	(Arme flamme fait un gros eclat)
+	(Arme Lance-flamme fait un gros eclat)
 	(Arme Hydrogene-Liquide fait un moyen eclat)
 )
 
